@@ -1,0 +1,19 @@
+[group]
+	# Name and return type of the target function
+	function.name = vfree
+	returnsVoid = yes
+
+	# Names and types of the arguments of the target function
+	arg.type = const void*
+	arg.name = addr
+	
+	# The parameters to be output to the trace. 
+	trace.param.type = const void*
+	trace.param.name = addr
+
+	# The format string to be used for trace output.
+	trace.formatString = "arguments: (%p)"
+
+# End of the group of definitions for vfree().
+
+#######################################################################
