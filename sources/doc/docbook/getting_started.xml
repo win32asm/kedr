@@ -1,0 +1,165 @@
+﻿<section id="getting_started">
+<title>Getting Started</title>
+
+<para>
+This section shows how to install KEDR framework and how to use it to analyse a simple kernel module.
+</para>
+<!-- ================================================================ -->
+
+<section id="getting_started.install">
+<title>Installation</title>
+
+<para>
+It is recommended to build KEDR from source. This allows to avoid a lot of issues concerning the differences between many versions and variants of Linux kernel. For the present, there is no official binary distribution of KEDR. 
+</para>
+
+<para>
+The source code of the framework can be downloaded from the <ulink url="&kedr-url;">project site</ulink> at BerliOS Developer.
+</para>
+
+<itemizedlist>
+<para>
+To be able to build KEDR, you need the following:
+</para>
+
+<listitem><para>
+Your Linux system should have kernel version 2.6.31 or newer (<command>uname -r</command> command should tell you what kernel version you are currently using)
+</para></listitem>
+
+<listitem><para>
+CMake build system (<ulink url="http://cmake.org/">http://cmake.org/</ulink>) version 2.6 or newer (version 2.8 or newer is preferable), 
+</para></listitem>
+
+<listitem><para>
+GNU C and C++ compilers - version 4.0 or newer is recommended
+</para></listitem>
+
+<listitem><para>
+GNU Make
+</para></listitem>
+
+<listitem><para>
+Other tools and packages necessary to build kernel modules: on some systems it can be <quote>kernel-*-devel</quote>, <quote>kernel-*-source</quote>, <quote>kernel-*-syms</quote> or some other packages, on some systems you may need to install <quote>DKMS</quote> package as well, etc.
+</para></listitem>
+</itemizedlist>
+
+<para>
+After all the prerequisites have been met, unpack the archive with the sources (<filename>kedr-&lt;version&gt;.tar.bz2</filename>) and create another directory, say, <filename class='directory'>kedr-build</filename> where KEDR will be built.
+</para>
+
+<note><para>
+It is highly recommended to use an out-of-source build, i.e. not to build KEDR from the directory containing its sources. With an out-of-source build, you leave the source tree of KEDR unchanged, which can be convenient. You can also configure and build the framework from different build directories with different options if you want to. An in-source build would make this impossible.
+</para></note>
+
+<para>
+Change current directory to <filename class='directory'>kedr-build</filename> and configure the package using the following command:
+</para>
+
+<programlisting><![CDATA[
+cmake -DCMAKE_INSTALL_PREFIX=<install_directory> <path-to-kedr-sources>
+]]></programlisting>
+
+<para>
+The package will be configured to be installed to <replaceable>&lt;install_directory&gt;</replaceable>. For example:
+</para>
+
+<programlisting><![CDATA[
+cmake -DCMAKE_INSTALL_PREFIX=/opt/kedr/ ../kedr-0.1/
+]]></programlisting>
+
+<para>
+If the configuration stage completes successfully, you can type <command>make</command> to build the package and <command>make install</command> - to install it to the configured location (<filename class='directory'>/opt/kedr/</filename> in the example above). You may need to execute <command>make install</command> as a root user.
+</para>
+
+<para>
+If you would like to install KEDR to the default location (usually, <filename class='directory'>/usr/local/</filename>), you can omit that <code>CMAKE_INSTALL_PREFIX</code> stuff and configure the package as follows:
+</para>
+
+<programlisting><![CDATA[
+cmake ../kedr-0.1/
+]]></programlisting>
+
+<para>
+To remove the files installed with <command>make install</command>, you can use <command>make uninstall</command> command.
+</para>
+
+<note><para>
+Currently, <command>make uninstall</command> does not remove directories, only files. That is why it can be convenient to install KEDR to a custom location like <filename class='directory'>/opt/kedr/</filename> rather than to <filename class='directory'>/usr/local/</filename> or the like. In the former case it is easier to cleanup after the package: <command>make uninstall</command> followed by <command>rm -rf /opt/kedr</command> will do the job.
+</para></note>
+
+<para>
+KEDR package also contains a set of tests for KEDR framework. You may want to run these tests after KEDR is built but before it is installed to see if the tools provided by the framework correctly operate on your system. To do so, just execute <command>make check</command> (as root user).
+</para>
+
+</section> <!-- "getting_started.install" -->
+<!-- ================================================================ -->
+
+<section id="getting_started.example">
+<title>A Simple Example</title>
+
+<para>
+Show how to use KEDR for call monitoring for a simple kernel module.
+</para>
+<para>
+As a simple kernel module you can take <quote>sample_target</quote> module from installed examples. Copy contents of the directory <filename class='directory'>sample_target</filename> into your own place, and run 'make' in that place. You should get file <filename>kedr_sample_target.ko</filename> there. It is a kernel module, which we will use to demonstrate abilities of the KEDR.
+</para>
+<para>
+Run script
+    <programlisting>
+kedr start kedr_sample_target
+    </programlisting>
+from the binary directory of installed KEDR. It will starts KEDR modules and prepare them to watch for kernel module with name <quote>kedr_sample_target</quote>. Also, it loads default call monitor payloads, which trace information about calls for the some of widely used kernel functions. Note, that <quote>kedr_sample_target</quote> itself is not loading at this stage.
+</para>
+<para>
+Information about kernel function calls is output into debugfs filesystem, so to see this information, you need to have this filesystem mounted to some node of you filesystem.
+Usually, it mounted by default to <filename class='directory'>/sys/kernel/debug</filename>. If it is not you case, you can mount it, executing
+    <programlisting>
+mount debugfs -t debugfs /sys/kernel/debug
+    </programlisting>
+</para>
+<para>
+You can force to output information about kernel function calls into you own file, instead system-special temporary one. For doing this, execute from binary KEDR directory
+    <programlisting>
+kedr_capture_trace start <replaceable>file-to-store-trace</replaceable>
+    </programlisting>
+From this moment, all tracing information will be stored into file <replaceable>file-to-store-trace</replaceable>.
+</para>
+<para>
+Now, everything is ready to load kernel module which we will watch for. It is better to do this by executing
+    <programlisting>
+kedr_sample_target load
+    </programlisting>
+from the directory with the compiled <quote>kedr_sample_target</quote> module. The thing is that <quote>kedr_sample_target</quote> module really create character device, and aside from the loading module itself, the script creates <filename>/dev/cfake</filename> node, which represents this character device in the your filesystem.
+</para>
+<para>
+Do something with character device, creating by the module. E.g., write zeroes into it:
+    <programlisting>
+dd if=/dev/zero of=/dev/cfake bs=1 count=10
+    </programlisting>
+</para>
+<para>
+Now, open file with trace (which path you pass to <command>kedr_capture_trace</command> script). TODO: what user will see in the trace file.
+</para>
+<para>
+Unload driver module, using command
+    <programlisting>
+kedr_sample_target unload
+    </programlisting>
+Line, containing string 'target_session_ends', should appear in the trace file. There will be nothing to new in this file, until target will be loaded again. So, stop redirection of the trace into our file:
+    <programlisting>
+kedr_capture_trace stop
+    </programlisting>
+</para>
+<para>
+Last step - stopping KEDR modules.
+    <programlisting>
+kedr stop
+    </programlisting>
+</para>
+
+TODO: how to use KEDR for call monitoring and fault simulation for a simple kernel module
+
+</section> <!-- "getting_started.example" -->
+<!-- ================================================================ -->
+
+</section>
