@@ -1,0 +1,110 @@
+<section id="capture_trace">
+<title>Capturing the Trace</title>
+
+<section id="capture_trace.general">
+<title>General</title>
+<para>
+    <command>kedr_capture_trace</command> - service-like tool for capture output of payloads' tracepoints into file, specified by user.
+</para>
+<para>
+    <command>kedr_capture_trace_until_done.sh</command> - script for capture output of payloads' tracepoints into file, specified by user. Wait until message about unloading of the current target is appeared in the output file, and quit.
+</para>
+</section>
+
+<section id="capture_trace.syntax">
+<title>Usage</title>
+
+<cmdsynopsis>
+    <command>kedr_capture_trace start</command>
+    <arg choice='plain'><replaceable>file</replaceable></arg>
+    <arg><replaceable>debugfs_mount_point</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+    <command>kedr_capture_trace stop</command>
+</cmdsynopsis>
+<cmdsynopsis>
+    <command>kedr_capture_trace status</command>
+</cmdsynopsis>
+<cmdsynopsis>
+    <command>kedr_capture_trace_until_done.sh</command>
+    <arg choice='plain'><replaceable>file</replaceable></arg>
+    <arg><replaceable>debugfs_mount_point</replaceable></arg>
+</cmdsynopsis>
+
+</section>
+<section id="kedr_capture_trace.options">
+<title>Options</title>
+
+<variablelist>
+    <varlistentry>
+        <term><replaceable>file</replaceable></term>
+        <listitem>
+            <para>
+Path to file, where to store results of capturing. If file exitst, trace content will be appended to it content.
+            </para>
+        </listitem>
+    </varlistentry>
+    <varlistentry>
+        <term><replaceable>debugfs_mount_point</replaceable></term>
+        <listitem>
+            <para>
+Directory, where debugfs filesystem is currently mounted. This filesystem contains tracing file, which will be capturing. When argument is not supplied,
+it is assumed that mount point of debugfs filesystem is <filename>/sys/kernel/debug</filename>.
+            </para>
+        </listitem>
+    </varlistentry>
+</variablelist>
+</section>
+<section id="capture_trace.description">
+<title>Description</title>
+    <section id="capture_trace.description.start">
+    <title>kedr_capture_trace start</title>
+        <para>
+<command>kedr_capture_trace start</command> start to capturing output into tracing file and store this output into file <replaceable>file</replaceable>. Note, that all strings, stored in <replaceable>file</replaceable>, are deleted from tracing file.
+        </para>
+        <para>
+If capturing already started, <command>kedr_capture_trace start</command> does nothing and returns 1.
+        </para>
+    </section>
+
+    <section id="capture_trace.description.stop">
+    <title>kedr_capture_trace stop</title>
+        <para>
+<command>kedr_capture_trace stop</command> stops to capturing tracing file. After this command is returned, all tracing strings are stored into tracing file as usual.
+        </para>
+        <para>
+If capturing is not started, <command>kedr_capture_trace stop</command> does nothing and returns 1.
+        </para>
+        <para>
+<command>kedr_capture_trace start</command> should not be called while <command>kedr_capture_trace_until_done.sh</command> is running.
+        </para>
+    </section>
+    <section id="capture_trace.description.status">
+    <title>&kedr-service; status</title>
+        <para>
+<command>kedr_capture_trace status</command> report, whether capturing was started or not. In the future, it may also report, into what file trace is stored.
+        </para>
+    </section>
+    <section id="capture_trace.description.until_done">
+    <title>kedr_capture_trace_until_done.sh</title>
+        <para>
+<command>kedr_capture_trace_until_done.sh</command> firstly verify, whether <replaceable>file</replaceable> exists. If it is so, and file already contains mark of unloading target without following mark of loading target, script ends immidiately.
+        </para>
+        <para>
+If <replaceable>file</replaceable> doesn't exist, or it doesn't contain mark of last target unloading, script starts to capture trace into <replaceable>file</replaceable> (in the appending mode). Calling process is blocked until mark of unloading target appears in the <replaceable>file</replaceable>. After that, script stop capturing and returns.
+        </para>
+    </section>
+</section>
+<section id="capture_trace.caveats">
+<title>Caveats</title>
+    <para>
+Because both <command>kedr_capture_trace</command> and <command>kedr_capture_trace_until_done.sh</command> programs capture physycally one trace, them should't be used simultaneously. That is, <command>kedr_capture_trace_until_done.sh</command> shouldn't be called while <command>kedr_capture_trace</command> is in capturing state, and <command>kedr_capture_trace start</command> shouldn't be called while <command>kedr_capture_trace_until_done.sh</command> is running.
+    </para>
+</section>
+<section id="capture_trace.examples">
+<title>Examples</title>
+    <para>
+Will be in the getted started.    
+    </para>
+</section>
+</section>
