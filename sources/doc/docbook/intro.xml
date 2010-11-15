@@ -1,0 +1,51 @@
+﻿<section id="intro">
+<title>Introduction</title>
+
+<para>
+<emphasis>KEDR framework</emphasis> provides the tools to facilitate runtime analysis of kernel modules (including device drivers) in Linux. <quote><phrase role="emphasized">KEDR</phrase></quote> is an acronym for <quote><phrase role="emphasized">KE</phrase>rnel-mode <phrase role="emphasized">D</phrase>rivers in <phrase role="emphasized">R</phrase>untime</quote>. The framework is intended to be used by the driver developers and may be useful for the driver certification systems as well.
+</para>
+
+<para>
+The tools provided by KEDR operate on a kernel module chosen by the user (<firstterm>target module</firstterm>). They monitor calls to the kernel functions that the module makes, perform fault simulation, etc. This may complement many existing tools for fault injection, memory checking, etc., that operate on the Linux kernel as a whole.
+</para>
+
+<para>
+The typical usage of KEDR is essentially as follows. The user works with the target kernel module as usual or may be runs some specific tests on it. At the same time, KEDR tools are monitoring the operation of the module, checking if it works correctly, doing fault simulation if requested, dumping the data about the actions made by the module to some kind of a trace for future analysis, etc. 
+</para>
+
+<para>
+KEDR framework is designed to be easy to extend and build upon. For example, the set of kernel functions to be monitored is fully customizable; fault simulation scenarios can also be provided and controlled by the user. Besides that, KEDR provides an interface to implement custom types of analysis via pluggable modules - in addition to call monitoring and fault simulation.
+</para>
+
+<para>
+Currently, KEDR works on x86 and x86-64 architectures. 
+</para>
+
+<para>
+KEDR is free software and is distributed under the terms of <ulink url="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License Version 2</ulink>.
+</para>
+
+<para>
+The latest stable version of KEDR as well as the development versions can be found at <ulink url="&kedr-url;"><quote>KEDR</quote> project site at BerliOS Developer.</ulink>
+</para>
+
+<warning>
+    <para>
+KEDR framework can do much harm if it gets out of control. USE IT ONLY IF YOU 
+KNOW WHAT YOU ARE DOING. There is no warranty. If you use KEDR, you do so at
+your own risk.
+    </para>
+    <para>
+Main components of KEDR framework operate in the kernel space. The system 
+instruments the modules under analysis and allows custom kernel modules to 
+alter the behaviour of these modules. This creates both a security hole 
+and a potential for system instability, especially if the kernel modules under 
+analysis are faulty.
+    </para>
+    <para>
+It is not recommended to use KEDR on the machines holding important data or 
+providing important services.
+    </para>
+</warning>
+
+</section>

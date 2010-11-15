@@ -1,0 +1,19 @@
+﻿<section id="extend">
+<title>Customizing and Extending KEDR</title>
+
+<!-- How to Use the Generator -->
+&kedr_using_gen;
+
+<!-- Custom Call Monitor Payloads -->
+&kedr_custom_callm_payloads;
+
+<!-- Custom Fault Simulation Payloads -->
+&kedr_custom_fsim_payloads;
+
+<!-- Custom Fault Simulation Scenarios -->
+&kedr_custom_fsim_scenarios;
+
+<!-- Implementing New Types of Analysis -->
+&kedr_custom_analysis;
+
+</section>
