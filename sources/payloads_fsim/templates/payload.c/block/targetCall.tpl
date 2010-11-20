@@ -1,0 +1,1 @@
+<$if returnType$>returnValue = <$endif$><$function.name$>(<$argumentList$>);
