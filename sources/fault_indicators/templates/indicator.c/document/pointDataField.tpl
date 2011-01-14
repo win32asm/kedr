@@ -1,0 +1,1 @@
+<$indicator.parameter.type$> <$indicator.parameter.name$>;
