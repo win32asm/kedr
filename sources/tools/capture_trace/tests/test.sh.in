@@ -1,0 +1,178 @@
+#! /bin/sh
+
+# Test standard "kedr_capture_trace" functionality of the service, or "kedr_capture_trace -s".
+# Accept parameter "kedr_capture_trace" or "kedr_capture_trace_until_done"
+
+if test $# -ne 1; then
+    printf "Usage:\n\t\ttest.sh kedr_capture_trace|kedr_capture_trace_until_done\n"
+    exit 1
+fi
+
+case "$1" in
+kedr_capture_trace)
+;;
+kedr_capture_trace_until_done)
+    is_session="true"
+;;
+*)
+    printf "Only 'kedr_capture_trace' or 'kedr_capture_trace_until_done' arguments are accepted\n"
+    exit 1
+esac
+
+
+tmpdir="@KEDR_TEST_PREFIX_TEMP_SESSION@/capture_trace"
+trace_file="${tmpdir}/trace"
+debugfs_mount_point="${tmpdir}/debugfs"
+
+base_module_name=kedr_base
+base_module="@CMAKE_BINARY_DIR@/base/${base_module_name}.ko"
+controller_module_name=kedr_controller
+controller_module="@CMAKE_BINARY_DIR@/controller/${controller_module_name}.ko"
+kedr_trace_module_name=kedr_trace
+kedr_trace_module="@CMAKE_BINARY_DIR@/trace/${kedr_trace_module_name}.ko"
+payload_module_name=kedr_payload
+payload_module="@CMAKE_CURRENT_BINARY_DIR@/payload/${payload_module_name}.ko"
+target_module_name=kedr_target
+target_module="@CMAKE_CURRENT_BINARY_DIR@/target/${target_module_name}.ko"
+
+capture_trace_script="@CMAKE_BINARY_DIR@/tools/capture_trace/kedr_capture_trace"
+if test ${is_session}; then
+    capture_trace_script="${capture_trace_script} -s"
+fi
+
+#is_process_running pid
+is_process_running()
+{
+    nlines=`ps -p "$1" | wc -l`
+    test "$nlines" -eq 2
+}
+
+#is_module_loaded module_name
+is_module_loaded()
+{
+    lsmod | grep "$1" > /dev/null
+}
+#unload_module module_name
+#Verify, whether module is loaded, and unload it
+unload_module()
+{
+    module_name="$1"
+    if is_module_loaded "${module_name}"; then
+        /sbin/rmmod "${module_name}"
+    fi
+}
+#Unload all modules, used in tests, and do some other cleaning work
+# Do not kill capturing process(!)
+clean_all()
+{
+    unload_module "${target_module_name}"
+    mount | grep "${debugfs_mount_point}" > /dev/null
+    if test $? -eq 0; then
+        umount "${debugfs_mount_point}"
+    fi
+    unload_module "${controller_module_name}"
+    unload_module "${payload_module_name}"
+    unload_module "${kedr_trace_module_name}"
+    unload_module "${base_module_name}"
+}
+
+# Load base, payload and controller modules
+/sbin/insmod "${base_module}"
+if test $? -ne 0; then
+	printf "Failed to load KEDR base module for tests\n"
+	exit 1
+fi
+
+/sbin/insmod "${kedr_trace_module}"
+if test $? -ne 0; then
+	printf "Failed to load kedr tracing module for tests\n"
+    clean_all
+	exit 1
+fi
+
+
+/sbin/insmod "${payload_module}"
+if test $? -ne 0; then
+	printf "Failed to load payload module for tests\n"
+    clean_all
+	exit 1
+fi
+
+/sbin/insmod "${controller_module}" "target_name=${target_module_name}"
+if test $? -ne 0; then
+	printf "Failed to load KEDR controller module for tests\n"
+    clean_all
+	exit 1
+fi
+
+mkdir -p "${debugfs_mount_point}"
+mount debugfs -t debugfs "${debugfs_mount_point}"
+if test $? -ne 0; then
+    printf "Cannot mount debugfs.\n"
+    clean_all
+    exit 1
+fi
+
+capture_pid=
+
+rm -f "${trace_file}"
+
+# Start capturing trace(in the background)
+${capture_trace_script} -d "${debugfs_mount_point}" -f "${trace_file}"&
+capture_pid=$!
+
+if ! is_process_running "$capture_pid"; then
+    printf "Failed to start capturing\n"
+    clean_all
+    exit 1
+fi
+# Load target module
+
+/sbin/insmod "${target_module}"
+
+if test $? -ne 0; then
+	printf "Failed to load target module\n"
+    kill $capture_pid
+    clean_all
+	exit 1
+fi
+
+# Unload target module
+/sbin/rmmod "${target_module}"
+
+# Stop capturing
+if test ! ${is_session}; then
+    # Time is implementation specific for kedr tracing system (kernel part)
+    sleep 0.6
+    kill -s INT "$capture_pid"
+fi
+
+wait "$capture_pid"
+
+umount "${debugfs_mount_point}"
+
+#Unload KEDR base, payload and controller modules
+/sbin/rmmod "${controller_module}"
+/sbin/rmmod "${payload_module}"
+/sbin/rmmod "${kedr_trace_module_name}"
+/sbin/rmmod "${base_module}"
+
+#Verify trace existance
+if ! test -f "${trace_file}"; then
+    printf "Trace file wasn't created, but it should\n"
+    exit 1
+fi
+#Verify that the trace contains some strings output by the payload
+if ! grep "Capture me payload 2" "${trace_file}" > /dev/null; then
+    printf "Module output a line to the trace but that line was not captured\n"
+    exit 1
+fi
+
+#! Implementation specific
+#Verify, that trace contain message about unload of the target
+if ! grep "target_session_ends" "${trace_file}" > /dev/null; then
+    printf "Ending mark wasn't captured\n"
+    exit 1
+fi
+
+exit 0

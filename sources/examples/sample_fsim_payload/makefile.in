@@ -1,0 +1,18 @@
+module_name=@module_name@
+
+kedr_base_symbols=@kedr_base_symbols@
+fault_simulation_symbols=@fault_simulation_symbols@
+
+KBUILD_DIR=@KBUILD_BUILD_DIR@
+PWD=`pwd`
+
+all: ${module_name}.ko
+
+${module_name}.ko: sample_fsim_payload.c ${kedr_base_symbols} ${fault_simulation_symbols}
+	cat "${kedr_base_symbols}" "${fault_simulation_symbols}" > ./Module.symvers
+	$(MAKE) -C ${KBUILD_DIR} M=${PWD} modules
+
+clean:
+	$(MAKE) -C ${KBUILD_DIR} M=${PWD} clean
+
+.PHONY: all clean
