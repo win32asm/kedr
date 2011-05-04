@@ -1,0 +1,247 @@
+<section id="kedr_control">
+<title>Controlling KEDR</title>
+
+<section id="kedr_control.general">
+<title>General</title>
+<para>
+    <command>&kedr-service;</command> - a service-like tool to control KEDR.
+</para>
+</section>
+
+<section id="kedr_control.syntax">
+<title>Usage</title>
+
+<cmdsynopsis>
+    <command>&kedr-service; start</command>
+    <arg choice='plain'><replaceable>target_name</replaceable></arg>
+    <group rep="repeat">
+        <arg choice='plain'>-c <replaceable>conf_string</replaceable></arg>
+        <arg choice='plain'>-f <replaceable>conf_file</replaceable></arg>
+    </group>
+</cmdsynopsis>
+<cmdsynopsis>
+    <command>&kedr-service; stop</command>
+</cmdsynopsis>
+<cmdsynopsis>
+    <command>&kedr-service; status</command>
+</cmdsynopsis>
+<cmdsynopsis>
+    <command>&kedr-service; restart</command>
+</cmdsynopsis>
+</section>
+<section id="kedr_control.options">
+<title>Options</title>
+
+<variablelist>
+    <varlistentry>
+        <term><option>-c</option> <replaceable>conf_string</replaceable></term>
+        <listitem>
+            <para>
+<replaceable>conf_string</replaceable> string provides configuration parameters that KEDR will use when loading and unloading.
+            </para>
+        </listitem>
+    </varlistentry>
+    <varlistentry>
+        <term>-f <replaceable>conf_file</replaceable></term>
+        <listitem>
+            <para>
+<replaceable>conf_file</replaceable> file provides configuration parameters that KEDR will use when loading and unloading. For the files in the default configuration directory (<filename class="directory">/var/opt/kedr/configs</filename>) or <filename class="directory">&lt;install_prefix&gt;/var/configs</filename> depending on where KEDR is installed) directory part of the path may be omitted. In the current version, the default configuration directory contains the following files:
+                <variablelist>
+                    <varlistentry>
+                        <term><filename>callm.conf</filename></term>
+                        <listitem>
+                            <para>Configuration profile for call monitoring (call tracing).</para>
+                        </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><filename>fsim.conf</filename></term>
+                        <listitem>
+                            <para>Configuration profile for fault simulation.</para>
+                        </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><filename>leak_check.conf</filename></term>
+                        <listitem>
+                            <para>Configuration profile for memory leak detection.</para>
+                        </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><filename>default.conf</filename></term>
+                        <listitem>
+                            <para>Default configuration profile is the profile for call monitoring too (the same as <filename>callm.conf</filename>).</para>
+                        </listitem>
+                    </varlistentry>
+                </variablelist>
+            </para>
+        </listitem>
+    </varlistentry>
+</variablelist>
+            <para>
+All <replaceable>conf_string</replaceable> and <replaceable>conf_file</replaceable> arguments of the command will actually be combined into one configuration file by KEDR control tool, in the same order as they are listed. The resulting profile will be used when loading and unloading KEDR.
+            </para>
+            <para>
+If no <replaceable>conf_string</replaceable> and <replaceable>conf_file</replaceable> options are given, the command will use the default configuration file (<filename>/var/opt/kedr/configs/default.conf</filename> or <filename>&lt;install_prefix&gt;/var/configs/default.conf</filename>, depending on where KEDR is installed).
+            </para>
+
+</section>
+<section id="kedr_control.description">
+<title>Description</title>
+    <section id="kedr_control.description.start">
+    <title>&kedr-service; start</title>
+        <para>
+<command>&kedr-service; start</command> loads <filename>kedr_base</filename> module first (it is a part of KEDR core). Then it processes the  configuration file in the <quote>on_load</quote> mode and executes all resulting strings. The configuration file is the default one or the one prepared based on the options of the command (see <xref linkend="kedr_control.options"></xref>). Finally, <filename>kedr_controller</filename> module is loaded (also part of the KEDR core) with <quote>target_name</quote> parameter equal to <replaceable>target_name</replaceable>. That is, the KEDR core is now configured to operate on the module named <replaceable>target_name</replaceable>.
+        </para>
+        <para>
+If <filename>kedr_base</filename> module is already loaded, <command>&kedr-service; start</command> does nothing and returns 1.
+        </para>
+        <para>
+If the module with name <replaceable>target_name</replaceable> is currently loaded, <command>&kedr-service; start</command> does nothing and returns 1.
+        </para>
+        <para>
+If starting <filename>kedr_base</filename> or <filename>kedr_controller</filename> modules or processing some of the lines in the configuration file fails (the corresponding operation returns nonzero), a rollback is performed. That is, all lines in the configuration file, up to the failed line, are processed in <quote>on_unload</quote> mode, and <filename>kedr_base</filename> module is unloaded (if it has been started successfully before). Then 1 is returned.
+        </para>
+    </section>
+
+    <section id="kedr_control.description.stop">
+    <title>&kedr-service; stop</title>
+        <para>
+<command>&kedr-service; stop</command> unloads <filename>kedr_controller</filename> module first. Then processes the configuration file (the same file as was used at the last start) in <quote>on_unload</quote> mode and executes resulting strings. Finally, <filename>kedr_base</filename> module is unloaded.
+        </para>
+        <para>
+If <filename>kedr_base</filename> module did not start, <command>&kedr-service; stop</command> does nothing and returns 1.
+        </para>
+        <para>
+If module with name <replaceable>target_name</replaceable> is currently running, <command>&kedr-service; stop</command> does nothing and returns 1.
+        </para>
+    </section>
+
+    <section id="kedr_control.description.status">
+    <title>&kedr-service; status</title>
+        <para>
+<command>&kedr-service; status</command> outputs information about the current status of KEDR.
+That is, whether <filename>kedr_base</filename> and <filename>kedr_controller</filename> modules are loaded, which payload modules are currently loaded, whether the target module (the module under analysis) is currently loaded.
+        </para>
+    </section>
+
+    <section id="kedr_control.description.restart">
+    <title>&kedr-service; restart</title>
+        <para>
+<command>&kedr-service; restart</command> does effectively the same as
+<programlisting>
+<command>&kedr-service; stop</command> &amp;&amp; <command>&kedr-service; start</command> <replaceable>target_name</replaceable> <replaceable>conf_file</replaceable>
+</programlisting>
+with <replaceable>target_name</replaceable> being the name of the current target and <replaceable>conf_file</replaceable> - the effective configuration file (default or the one constructed from options) with which KEDR was started last time.
+        </para>
+        <para>
+If <filename>kedr_base</filename> module is not currently loaded, <command>&kedr-service; restart</command> does nothing and returns 1.
+        </para>
+        <para>
+If module with name <replaceable>target_name</replaceable> is currently loaded, <command>&kedr-service; restart</command> does nothing and returns 1.
+        </para>
+        <para>
+If <filename>kedr_base</filename> module is still loaded after <quote>stop</quote> operation has been executed, <quote>start</quote> operation will not run and <command>&kedr-service; restart</command> will return 1.
+        </para>
+    </section>
+</section>
+
+<section id="kedr_control.caveats">
+<title>Caveats</title>
+    <para>
+In its <command>start</command>, <command>stop</command> and <command>restart</command> modes, <command>&kedr-service;</command> may break the usage of the trace. So, trace capturing mechanism (<command>kedr_capture_trace</command>) should not be running when <command>&kedr-service;</command> command is executed in these modes.
+    </para>
+</section>
+
+<section id="kedr_control.config_file">
+<title>Configuration file</title>
+    <para>
+The configuration file is treated as an ordered list of lines each of which has one of the following forms:
+        <simplelist>
+            <member>
+<synopsis>
+<literal>on_load</literal> <replaceable>shell-command</replaceable>
+</synopsis>
+            </member>
+            <member>
+<synopsis>
+<literal>on_unload</literal> <replaceable>shell-command</replaceable>
+</synopsis>
+            </member>
+            <member>
+<synopsis>
+<literal>module</literal>|<literal>payload</literal> <replaceable>module-name</replaceable>|<replaceable>module-filename</replaceable> <optional><replaceable>parameters...</replaceable></optional>
+</synopsis>
+            </member>
+        </simplelist>
+    </para>
+    <para>
+        Besides that, empty lines as well as the lines containing only spaces and lines starting with <literal>#</literal> character are allowed and ignored when the <link linkend="kedr_control.general">control tool</link> processes the configuration file.
+    </para>
+    <para>
+        A line containing <replaceable>shell-command</replaceable> preceded by <literal>on_load</literal> is executed in <quote>on_load</quote> mode and is ignored otherwise.
+    </para>
+    <para>
+        A line containing <replaceable>shell-command</replaceable> preceded by <literal>on_unload</literal> is executed in <quote>on_unload</quote>  mode and is ignored otherwise.
+    </para>
+    <para>
+<quote>on_load</quote> and <quote>on_unload</quote> modes are described in <xref linkend="kedr_control.description"/>.
+    </para>
+    <para>
+Line
+<synopsis>
+<literal>module</literal> <replaceable>module-name</replaceable> <optional><replaceable>parameters...</replaceable></optional>
+</synopsis>
+where <replaceable>module-name</replaceable> is the name of a module or its alias, is actually equivalent to
+<programlisting>
+<literal>on_load</literal> modprobe <replaceable>module-name</replaceable> <optional><replaceable>parameters...</replaceable></optional>
+<literal>on_unload</literal> modprobe -r <replaceable>module-name</replaceable> 
+</programlisting>
+    </para>
+    <para>
+Line
+<synopsis>
+<literal>module</literal> <replaceable>module-filename</replaceable> <optional><replaceable>parameters...</replaceable></optional>
+</synopsis>
+where <replaceable>module-filename</replaceable> is the absolute path to the module, is actually equivalent to
+<programlisting>
+<literal>on_load</literal> insmod <replaceable>module-filename</replaceable> <optional><replaceable>parameters...</replaceable></optional>
+<literal>on_unload</literal> rmmod <replaceable>module-filename</replaceable> 
+</programlisting>
+    </para>
+    <para>
+<literal>payload</literal> keyword at the start of the line has same meaning as <literal>module</literal> but also marks <replaceable>module-name</replaceable> or <replaceable>module-filename</replaceable> as a <link linkend="payload_module">payload module</link>.
+    </para>
+    <para>
+        In <quote>on_load</quote> mode, all processed lines in the configuration file are executed from the first to the last. In <quote>on_unload</quote> mode, they are executed in a reverse order (i.e. if module A is loaded after module B then A unloaded before B).
+    </para>
+</section>
+<section id="kedr_control.examples">
+<title>Examples</title>
+
+<programlisting><![CDATA[
+kedr start module1
+]]></programlisting>
+
+    <para>
+This command will start KEDR with the default payloads for call monitoring. When module named <literal>module1</literal> will be loaded, it will be processed by KEDR.
+    </para>
+
+<programlisting><![CDATA[
+kedr start module1 -c 'payload payload1 arg1 arg2' -c 'payload payload2'
+]]></programlisting>
+
+    <para>
+Same as above, but instead of loading the default payloads, it will load payload modules <literal>payload1</literal> (with arguments <literal>arg1</literal> <literal>arg2</literal>) and <literal>payload2</literal>.
+    </para>
+    <para>
+If the payload module <literal>payload1</literal> uses symbols from another module, say <literal>module_aux</literal>, then the configuration file should contain the following lines (the order is important!)
+    </para>
+
+<programlisting>
+...
+module module_aux
+payload payload1
+...
+</programlisting>
+
+</section>
+</section>

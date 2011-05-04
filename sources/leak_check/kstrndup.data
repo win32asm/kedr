@@ -1,0 +1,24 @@
+[group]
+	# Name and return type of the target function
+	function.name = kstrndup
+	returnType = char *
+
+	# Names and types of the arguments of the target function
+	arg.type = const char *
+	arg.name = s
+
+	arg.type = size_t
+	arg.name = max
+
+	arg.type = gfp_t
+	arg.name = flags
+	
+	# The body of the replacement function
+	handler.post =>>
+	if (returnValue != NULL)
+		klc_add_alloc((void *)returnValue, strnlen(s, max) + 1, stack_depth);
+	<<
+
+# End of the group of definitions for kstrndup().
+
+#######################################################################

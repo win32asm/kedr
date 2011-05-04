@@ -1,0 +1,17 @@
+[group]
+	# Name and return type of the target function
+	function.name = vfree
+
+	# Names and types of the arguments of the target function
+	arg.type = const void *
+	arg.name = addr
+	
+	# The body of the replacement function
+	handler.pre =>>
+	if (!ZERO_OR_NULL_PTR(addr) && !klc_find_and_remove_alloc(addr)) 
+		klc_add_bad_free(addr, stack_depth);
+	<<
+
+# End of the group of definitions for vfree().
+
+#######################################################################
