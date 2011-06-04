@@ -1,0 +1,1 @@
+<$if concat(indicator.parameter.type)$><$indicator.parameter.type : join(,)$><$endif$>
