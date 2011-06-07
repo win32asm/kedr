@@ -1,0 +1,40 @@
+# This module processes the calls to module_put function.
+
+module.name = @module_name@
+module.author = Tsyvarev
+module.license = GPL
+
+header =>>
+/* ========================================================================
+ * Copyright (C) 2010-2011, Institute for System Programming 
+ *                          of the Russian Academy of Sciences (ISPRAS)
+ * Authors: 
+ *      Eugene A. Shatokhin <spectre@ispras.ru>
+ *      Andrey V. Tsyvarev  <tsyvarev@ispras.ru>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation.
+ ======================================================================== */
+
+#include <linux/module.h>
+<<
+
+[group]
+	# Name and return type of the target function
+	function.name = module_put
+
+	# Names and types of the arguments of the target function
+	arg.type = struct module*
+	arg.name = m
+	
+	# The parameters to be output to the trace. 
+	trace.param.type = void*
+	trace.param.name = m
+
+	# The format string to be used for trace output.
+	trace.formatString = "arguments: (%p)"
+
+# End of the group of definitions for module_put().
+
+#######################################################################

@@ -1,0 +1,49 @@
+# This module processes the calls to kstrdup function.
+
+module.name = @module_name@
+module.author = Tsyvarev
+module.license = GPL
+
+header =>>
+/* ========================================================================
+ * Copyright (C) 2010-2011, Institute for System Programming 
+ *                          of the Russian Academy of Sciences (ISPRAS)
+ * Authors: 
+ *      Eugene A. Shatokhin <spectre@ispras.ru>
+ *      Andrey V. Tsyvarev  <tsyvarev@ispras.ru>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation.
+ ======================================================================== */
+
+#include <linux/string.h>
+<<
+
+[group]
+	# Name and return type of the target function
+	function.name = kstrdup
+	returnType = char*
+
+	# Names and types of the arguments of the target function
+	arg.type = const char*
+	arg.name = str
+	
+	arg.type = gfp_t
+	arg.name = flags
+
+	# Calculate length of the string
+	prologue = size_t len = strlen(str);
+
+	# Fault Simulation
+	fpoint.param.type = size_t
+	fpoint.param.name = len
+
+	fpoint.param.type = gfp_t
+	fpoint.param.name = flags
+
+	fpoint.fault_code =	returnValue = NULL;
+
+# End of the group of definitions for kstrdup().
+
+#######################################################################
