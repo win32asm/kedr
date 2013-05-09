@@ -1,0 +1,14 @@
+[group]
+	# The parameters to be output to the trace. 
+	trace.param.type = struct mutex *
+	trace.param.name = lock
+
+	trace.param.type = const char *
+	trace.param.name = name
+
+	trace.param.type = struct lock_class_key *
+	trace.param.name = key
+
+	# The format string to be used for trace output.
+	trace.formatString = "arguments: (%p, %p, %p)"
+#######################################################################

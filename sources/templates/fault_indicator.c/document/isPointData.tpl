@@ -1,0 +1,1 @@
+<$if concat(indicator.parameter.type)$>1<$endif$>

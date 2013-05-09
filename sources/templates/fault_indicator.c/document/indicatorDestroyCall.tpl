@@ -1,0 +1,1 @@
+	indicator_destroy_<$indicator.destroy.name$>(<$if concat(indicator.state.name)$><$indicatorStateName$><$endif$>);

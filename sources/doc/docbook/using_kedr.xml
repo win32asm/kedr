@@ -1,0 +1,24 @@
+﻿<section id="kedr_manual_using_kedr">
+<title>Using KEDR</title>
+
+<!-- Controlling KEDR -->
+&kedr_service;
+
+<!-- Capture trace -->
+&kedr_trace;
+
+<!-- How KEDR Works -->
+&kedr_work;
+
+<!-- Call Monitoring -->
+&kedr_call_mon;
+
+<!-- Fault Simulation -->
+&kedr_fault_sim;
+
+<!-- Detecting Memory Leaks -->
+&kedr_leak_check;
+
+<!-- Analyzing the Trace -->
+&kedr_analyze_trace;
+</section>

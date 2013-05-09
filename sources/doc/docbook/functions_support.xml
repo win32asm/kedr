@@ -1,0 +1,138 @@
+﻿<section id="functions_support">
+<title>Creating Trampolines</title>
+
+<para>
+This section describes how to create <firstterm><link linkend="trampoline">trampolines</link></firstterm> for <link linkend="target_function">target functions</link> intercepted by the payload modules.
+</para>
+
+<section id="functions_support.why">
+<title>Why Trampolines Are Needed</title>
+
+<para>
+The main purpose of <link linkend="trampoline">trampolines</link> is to make it possible to use two or more payload modules simultaneously no matter whether some of the target functions they process are the same or not.
+</para>
+<para>
+This allows to perform several kinds of operations on the target module at the same time. For example, while fault simulation is turned on, KEDR can also do call monitoring to obtain a trace of calls to the functions affected by fault simulation as well as any other calls of interest. In addition, KEDR can now perform memory leak detection and fault simulation simultaneously. You can also use the standard payload modules provided by KEDR in conjunction with almost any custom payload module (as long as no more than one of these modules defines a <link linkend="replacement_function">replacement function</link> for a given target function; <link linkend="pre_handler">pre handlers</link> and <link linkend="post_handler">post handlers</link> are not limited in this way though). Note that a payload module may not even know that other payload modules are working at the same time.
+</para>
+
+</section> <!-- "functions_support.why" -->
+<!-- ================================================================ -->
+
+<section id="functions_support.define">
+<title>How to Define Trampolines</title>
+
+<para>
+The source code of the trampolines is created automatically from the special data file by <link linkend="using_gen"><command>kedr_gen</command> tool</link>. Such data file should be written for each payload module and should contain information about the target functions processed by this payload module.
+</para>
+<para>
+Here we describe what information the data file should provide.
+</para>
+<para>
+At the global scope, the data file may contain only a single parameter:
+<variablelist>
+    <varlistentry><term>header</term>
+        <listitem>the #include directives necessary to use the target functions of interest.</listitem>
+    </varlistentry>
+</variablelist>
+</para>
+<para>
+For each target function, a group should be prepared. Each group should contain definitions of the following parameters:
+<variablelist>
+    <varlistentry><term>function.name</term>
+        <listitem>name of the target function</listitem>
+    </varlistentry>
+    <varlistentry><term>returnType</term>
+        <listitem>return type of the target function if it is not void, otherwise do not define this parameter at all</listitem>
+    </varlistentry>
+    <varlistentry><term>arg.type</term>
+        <listitem>(multi-valued) types of the arguments of the target function, starting with the first one. If the function has no arguments, do not define this parameter at all.</listitem>
+    </varlistentry>
+    <varlistentry><term>arg.name</term>
+        <listitem>(multi-valued) names of the arguments of the target function, starting with the first one. If the function has no arguments, do not define this parameter at all.</listitem>
+    </varlistentry>
+    <varlistentry><term>ellipsis</term>
+        <listitem>If function takes variable number of arguments, this parameter should be non-empty. Otherwise, shouldn't be assigned at all.</listitem>
+    </varlistentry>
+    <varlistentry><term>last_arg</term>
+        <listitem>If function takes variable number of arguments, this parameter should be set to the name of last named argument. Otherwise, shouldn't be assigned at all.</listitem>
+    </varlistentry>
+    <varlistentry><term>original_code</term>
+        <listitem>If function takes variable number of arguments, this parameter should be non-empty and contain code, which is equvalent to the function body which use 'args' parameter of type va_list for iterate over variadic parameters. Otherwise, shouldn't be assigned at all.</listitem>
+    </varlistentry>
+</variablelist>
+</para>
+<para>
+If trampoline is created for target function with accept variable number of parameters(function signature ends with <code>, ...</code>), following parameters should be defined for the group:
+<variablelist>
+    <varlistentry><term>ellipsis</term>
+        <listitem>If function takes variable number of arguments, this parameter should be non-empty.</listitem>
+    </varlistentry>
+    <varlistentry><term>last_arg</term>
+        <listitem>If function takes variable number of arguments, this parameter should be set to the name of last named argument.</listitem>
+    </varlistentry>
+    <varlistentry><term>original_code</term>
+        <listitem>If function takes variable number of arguments, this parameter should be non-empty and contain code, which is equvalent to the function body and use <varname>args</varname> parameter of type <type>va_list</type> for iterate over variadic parameters.  If function return value, it should be assigned to <varname>ret_val</varname> variable.</listitem>
+    </varlistentry>
+</variablelist>
+Note, that trampoline for function with variable number of arguments expects <link linkend="pre_handler">pre handlers</link>, <link linkend="post_handler">post handlers</link> and <link linkend="replacement_function">replacement function</link> to use argument of type <type>va_list</type> for iterate over variadic arguments of the target functions. This argument is passed just after the last named target function's argument (before <code>call_info</code> parameter and parameter contained function result, if it is).
+</para>
+</section> <!-- "functions_support.define" -->
+
+<section id="functions_support.stub">
+<title>A Stub of the Data File Describing the Targets</title>
+
+<para>
+Here is an example of a data file describing the target functions <code>int foo(void *p)</code> and <code>void bar(int x, int y, const char *str)</code>. The source code of the trampolines can be generated for these functions from this file. It is assumed that <code>foo()</code> and <code>bar()</code> are defined in <filename>&lt;foo.h&gt;</filename> and <filename>&lt;bar.h&gt;</filename> headers, respectively. 
+</para>
+
+<programlisting>
+header =&gt;&gt;
+#include &lt;foo.h&gt;
+#include &lt;bar.h&gt;
+&lt;&lt;
+
+[group]
+    # Name and return type of the target function
+    function.name = foo
+    returnType = int
+
+    # Names and types of the arguments of the target function
+    arg.type = void *
+    arg.name = p
+    
+# End of the group of definitions for foo().
+
+[group]
+    # Name and return type of the target function
+    function.name = bar
+
+    # Names and types of the arguments of the target function
+    arg.type = int
+    arg.name = x
+
+    arg.type = int
+    arg.name = y
+
+    arg.type = const char *
+    arg.name = str
+
+# End of the group of definitions for bar().
+</programlisting>
+</section> <!-- "functions_support.stub" -->
+
+
+<section id="functions_support.generate">
+<title>Generating the Source Code of the Trampolines</title>
+
+<para>
+To generate the file with the source code of the trampolines from a data file, use the following command:
+<programlisting>
+<replaceable>&lt;kedr_install_dir&gt;</replaceable>/lib/kedr/kedr_gen <replaceable>&lt;kedr_install_dir&gt;</replaceable>/share/kedr/templates/function_support.c \
+    <replaceable>datafile</replaceable> &gt; <replaceable>functions_support.c</replaceable>
+</programlisting>
+A file named <replaceable>functions_support.c</replaceable> will be created as a result. This file can then be used when building the payload module.
+</para>
+
+</section> <!-- "functions_support.generate" -->
+
+</section>
