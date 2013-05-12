@@ -1,0 +1,36 @@
+module.author = Tsyvarev
+module.license = GPL
+
+indicator.name = fail_with_even_instances
+
+global =>>
+/* ========================================================================
+ * Copyright (C) 2012, KEDR development team
+ * Copyright (C) 2010-2012, Institute for System Programming 
+ *                          of the Russian Academy of Sciences (ISPRAS)
+ * Authors: 
+ *      Eugene A. Shatokhin <spectre@ispras.ru>
+ *      Andrey V. Tsyvarev  <tsyvarev@ispras.ru>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation.
+ ======================================================================== */
+
+atomic_t instances = ATOMIC_INIT(0);
+<<
+
+indicator.simulate.name = even_instances
+indicator.simulate.code =>>
+	return (atomic_read(&instances) % 2) == 0;
+<<
+
+indicator.init.name = instances
+indicator.init.code =>>
+ 	atomic_inc(&instances); return 0;
+<<
+
+indicator.destroy.name = instances
+indicator.destroy.code =>>
+	atomic_dec(&instances);
+<<

@@ -1,0 +1,4 @@
+[group]
+	# The format string to be used for trace output.
+	trace.formatString = ""
+#######################################################################

@@ -1,0 +1,671 @@
+﻿<section id="kedr_manual_getting_started">
+<title>Getting Started</title>
+
+<para>
+This section shows how to install KEDR framework and how to use it to analyze a simple kernel module.
+</para>
+
+<warning>
+    <para>
+KEDR framework can do much harm if it gets out of control. USE IT ONLY IF YOU 
+KNOW WHAT YOU ARE DOING. There is no warranty. If you use KEDR, you do so at
+your own risk.
+    </para>
+    <para>
+Main components of KEDR framework operate in the kernel space. The system 
+instruments the modules under analysis and allows custom kernel modules to 
+alter the behaviour of these modules. This creates both a security hole 
+and a potential for system instability, especially if the kernel modules under 
+analysis are faulty.
+    </para>
+    <para>
+It is not recommended to use KEDR on the machines holding important data or 
+providing important services.
+    </para>
+</warning>
+<!-- ================================================================ -->
+
+<section id="getting_started.install">
+<title>Installation</title>
+
+<para>
+It is recommended to build KEDR from source. This allows to avoid a lot of issues concerning the differences between many versions and variants of the Linux kernel.
+</para>
+
+<para>
+The source code of the framework can be downloaded from the project sites <ulink url="&kedr-url-gc;">at Google Code</ulink> (main site) and <ulink url="&kedr-url-berlios;">at BerliOS Developer</ulink> (mirror).
+</para>
+
+<itemizedlist>
+<para>
+To be able to build KEDR, you need the following:
+</para>
+
+<listitem><para>
+Your Linux system should have kernel version 2.6.32 or newer. <command>uname -r</command> command should tell you what kernel version you are currently using. x86 and x86-64 architectures are currently supported.
+</para></listitem>
+
+<listitem><para>
+CMake build system (<ulink url="http://cmake.org/">http://cmake.org/</ulink>) version 2.6 or newer (version 2.8 or newer is preferable)
+</para></listitem>
+
+<listitem><para>
+GNU C and C++ compilers version 4.0 or newer
+</para></listitem>
+
+<listitem><para>
+GNU Make
+</para></listitem>
+
+<listitem><para>
+Other tools and packages necessary to build kernel modules: on some systems it can be <filename>kernel-*-devel</filename>, <filename>kernel-*-source</filename>, <filename>kernel-*-syms</filename>, <filename>linux-headers-*</filename> or other packages. On some systems you may also need to install <filename>DKMS</filename> package or something like that.
+</para></listitem>
+</itemizedlist>
+
+<para>
+After all the prerequisites have been met, unpack the archive with the sources (<filename>kedr-&rel-version;.tar.bz2</filename>) and create another directory, say, <filename class='directory'>kedr-build</filename> where KEDR will be built.
+</para>
+
+<note><para>
+It is highly recommended to use an out-of-source build, i.e. not to build KEDR from the directory containing its sources. With an out-of-source build, you leave the source tree of KEDR unchanged, which can be convenient. The source tree can even be read-only in this case. You can also configure and build the framework from different build directories with different options if you want to. An in-source build would make this impossible.
+</para></note>
+
+<para>
+Change current directory to <filename class='directory'>kedr-build</filename> and configure the package using the following command:
+</para>
+
+<programlisting><![CDATA[
+cmake ../kedr-0.4/
+]]></programlisting>
+
+<para>
+During configuration phase, the information about the environment is analyzed and appropriate settings are prepared for KEDR to tune it properly to your system. This is done automatically.
+</para>
+
+<para>
+By default, KEDR will be installed to <filename class='directory'>/usr/local/</filename>. If you would like to install KEDR to some other location, configure the package as follows:
+</para>
+
+<programlisting><![CDATA[
+cmake -DCMAKE_INSTALL_PREFIX=<install_directory> <path-to-kedr-sources>
+]]></programlisting>
+
+<para>
+Example:
+</para>
+
+<programlisting><![CDATA[
+cmake -DCMAKE_INSTALL_PREFIX=/opt/kedr/ ../kedr-0.4/
+]]></programlisting>
+
+<para>
+The package will be configured to be installed to <filename class='directory'>/opt/kedr/</filename>.
+</para>
+
+<para>
+If the configuration stage completes successfully, you can type <command>make</command> to build the package and <command>make install</command> - to install it. You may need to execute <command>make install</command> as a root user.
+</para>
+
+<para>
+To remove the files installed with <command>make install</command>, you can use <command>make uninstall</command> command.
+</para>
+
+<note><para>
+Currently, <command>make uninstall</command> does not remove directories, only files.
+</para></note>
+
+<para>
+KEDR package also contains a set of tests for KEDR framework. You may want to run these tests after KEDR is built but before it is installed to see if the tools provided by the framework correctly operate on your system. To do so, just execute <command>make check</command> (as root user).
+</para>
+
+</section> <!-- "getting_started.install" -->
+<!-- ================================================================ -->
+
+<section id="getting_started.use_case">
+<title>Analyzing the Sample Module</title>
+
+<para>
+We assume here that KEDR has been installed to <filename class="directory">/usr/local</filename>. Unless specifically stated, the control and helper tools mentioned below should be executed by a user with root privileges.
+</para>
+
+<para>
+Debugfs is assumed to be mounted to <filename class='directory'>/sys/kernel/debug</filename>. If it is not the case for your system, you can mount it manually by executing
+<programlisting>
+mount debugfs -t debugfs /sys/kernel/debug
+</programlisting>
+</para>
+
+<para>
+You can use <quote>sample_target</quote> module as a kernel module to be analyzed. It can be found among the examples installed with KEDR (see <filename class="directory">/usr/local/share/kedr/examples/</filename>). Copy the contents of <filename class="directory">sample_target</filename> directory to a place of your choice and run <command>make</command> there. You should get <filename>kedr_sample_target.ko</filename> kernel module as a result.
+</para>
+
+<para>
+Run the control script (as root):
+<programlisting>
+/usr/local/bin/kedr start kedr_sample_target
+</programlisting>
+This will load KEDR and will instruct it to process the kernel module with the specified name (<quote>kedr_sample_target</quote>). Note that <quote>kedr_sample_target</quote> itself is not loaded at this stage. But as soon as this module is loaded, KEDR will detect that.
+</para>
+
+<para>
+Now load the module to be analyzed (<firstterm>target module</firstterm>). The easiest way to do this is to execute a helper script provided with that module:
+<programlisting>
+./kedr_sample_target load
+</programlisting>
+When the module is loaded, it creates two character devices, <filename>/dev/cfake0</filename> and <filename>/dev/cfake1</filename>.
+</para>
+
+<para>
+Now the appropriate components of KEDR are up and running and the target module is loaded. What kind of analysis will actually be done depends on the configuration of KEDR. The common variants are described in the following sections.
+</para>
+
+<para>
+When you are done with the target module, you can unload it:
+<programlisting>
+./kedr_sample_target unload
+</programlisting>
+</para>
+
+<para>
+After that, you would usually collect the results produces by the KEDR tools.
+</para>
+
+<para>When KEDR is no longer needed it can be stopped and unloaded too:
+<programlisting>
+/usr/local/bin/kedr stop
+</programlisting>
+</para>
+</section> <!-- "getting_started.use_case" -->
+<!-- ================================================================ -->
+
+<section id="getting_started.leak_check">
+<title>Detecting Memory Leaks</title>
+
+<para>When you start KEDR with no configuration profile specified, the memory leak detector, <link linkend="leak_check"><firstterm>LeakCheck</firstterm></link> is loaded. This is the same as if the configuration profile <filename>leak_check.conf</filename> was used.
+</para>
+
+<para>
+Let us check <filename>kedr_sample_target</filename> module for memory leaks. First, load KEDR:
+<programlisting><![CDATA[
+/usr/local/bin/kedr start kedr_sample_target
+]]></programlisting>
+
+or, equivalently,
+
+<programlisting><![CDATA[
+/usr/local/bin/kedr start kedr_sample_target -f leak_check.conf
+]]></programlisting>
+</para>
+
+<para>
+Load the target module and work with it as usual, for example, do something with the character devices that it creates:
+</para>
+
+<programlisting><![CDATA[
+./kedr_sample_target load
+dd if=/dev/zero of=/dev/cfake0 bs=1 count=10
+echo 0123456789ABCDEF > /dev/cfake1
+]]></programlisting>
+
+<para>
+Unload the target module:
+</para>
+
+<programlisting><![CDATA[
+./kedr_sample_target unload
+]]></programlisting>
+
+<para>
+By this moment, KEDR should have prepared a report about memory leaks it has detected. By default, the report is output both to the system log and to the files in <filename class="directory">kedr_leak_check/kedr_sample_target</filename> directory in debugfs. To access the system log, you can use <command>dmesg</command>, for example.
+</para>
+
+<para>
+The system log should now contain something like the following among other things:
+</para>
+
+<programlisting><![CDATA[
+[leak_check] Target module: "kedr_sample_target", 
+    init area at 0xffffffffa0010000, core area at 0xffffffffa00f6000
+...
+[leak_check] Totals:
+[leak_check] Allocations: 3
+[leak_check] Possible leaks: 0
+[leak_check] Unallocated frees: 0
+[leak_check] ======== end of LeakCheck report ========
+]]></programlisting>
+
+<para>
+This means that LeakCheck has seen 3 memory allocations executed by the target module and has found no memory leaks among these.
+</para>
+
+<para>
+This summary is also available in the file <filename>info</filename> in the debugfs directory mentioned above.
+</para>
+
+<para>
+Now, let us intentionally create a memory leak in <filename>kedr_sample_target</filename> module. What is needed is just to comment out one or more calls to <code>kfree()</code>, for example, in <code>cfake_destroy_device()</code>:
+</para>
+
+<programlisting><![CDATA[
+/* Destroy the device and free its buffer */
+static void
+cfake_destroy_device(struct cfake_dev *dev, int minor,
+    struct class *class)
+{
+    BUG_ON(dev == NULL || class == NULL);
+    device_destroy(class, MKDEV(cfake_major, minor));
+    cdev_del(&dev->cdev);
+    /* kfree(dev->data); */ /* Memory leak */
+    return;
+}
+]]></programlisting>
+
+<para>
+Now rebuild <filename>kedr_sample_target</filename>, load this module, perform the same operations with it as above and then unload it.
+</para>
+
+<para>
+Take a look at the summary report in the system log or in <filename>info</filename> file:
+</para>
+
+<programlisting><![CDATA[
+Target module: "kedr_sample_target", 
+    init area at 0xffffffffa0730000, core area at 0xffffffffa072d000
+Allocations: 3
+Possible leaks: 2
+Unallocated frees: 0
+]]></programlisting>
+
+<para>
+This time, LeakCheck has detected two memory leaks. The file <filename>possible_leaks</filename> provides the details, namely, address and size for each memory block that was not freed and the call stack of the allocation:
+</para>
+
+<programlisting><![CDATA[
+Address: 0xffff880024285000, size: 4000; stack trace of the allocation:
+[<ffffffffa072d35e>] cfake_open+0x6e/0xb8 [kedr_sample_target]
+[<ffffffff81156e3a>] chrdev_open+0x10a/0x200
+[<ffffffff81151295>] __dentry_open+0xe5/0x330
+[<ffffffff811515f4>] nameidata_to_filp+0x54/0x70
+[<ffffffff8115e358>] finish_open+0xe8/0x1d0
+[<ffffffff8115f7b6>] do_last+0x86/0x460
+[<ffffffff81161aeb>] do_filp_open+0x21b/0x660
+[<ffffffff81151039>] do_sys_open+0x69/0x170
+[<ffffffff81151180>] sys_open+0x20/0x30
+[<ffffffff8100a0f2>] system_call_fastpath+0x16/0x1b
+[<ffffffffffffffff>] 0xffffffffffffffff
++1 more allocation(s) with the same call stack.
+]]></programlisting>
+
+<para>
+The line you have commented out in the sources of the module was executed twice (once for each device the module services), so you have got two memory leaks. The call stack shows where the memory blocks were allocated.</para>
+
+<para>If the target module has debug information, you can use, for example, <command>objdump</command>, <command>addr2line</command> or <command>gdb</command> to find out where in the source code of the module this call stack corresponds to (see <xref linkend="analyze_trace"/> for details). 
+</para>
+
+<para>
+According to the stack trace, those memory blocks were allocated by the calls made from <code>cfake_open()</code> function in the target module. The corresponding call instruction is just before the offset of 0x6e from the beginning of the function in the binary file of the module. Let us find that place with <command>objdump</command> (in fact, it is not really needed in this example as it is already obvious where in the source code are the necessary lines, but still). This will disassemble the target module and store the listing in <filename>module.disasm</filename> file:
+</para>
+
+<programlisting><![CDATA[
+objdump -dSlr kedr_sample_target.ko > module.disasm
+]]></programlisting>
+
+<para>
+Look for <code>cfake_open()</code> in the disassembled code and you will find a fragment like this:
+</para>
+
+<programlisting><![CDATA[
+00000000000002f0 <cfake_open>:
+cfake_open():
+/home/tester/temp/sample_target/cfake.c:57
+static struct class *cfake_class = NULL;
+/* ============== */
+
+int 
+cfake_open(struct inode *inode, struct file *filp)
+{
+ 2f0:	55                   	push   %rbp
+ 2f1:	48 89 e5             	mov    %rsp,%rbp
+ ...
+]]></programlisting>
+
+<para>
+As you can see, the offset of <code>cfake_open()</code> in the .text section of the binary file is 0x2f0. The call we look for should be before the offset 0x2f0+0x6e=0x35e, so scroll down to that offset:
+</para>
+
+<programlisting><![CDATA[
+ 350:	48 8b 7b 08          	mov    0x8(%rbx),%rdi
+ 354:	be d0 80 00 00       	mov    $0x80d0,%esi
+ 359:	e8 00 00 00 00       	callq  35e <cfake_open+0x6e>
+			35a: R_X86_64_PC32	__kmalloc-0x4
+cfake_open():
+/home/tester/temp/sample_target/cfake.c:85
+	
+	/* if opened the 1st time, allocate the buffer */
+	if (dev->data == NULL)
+	{
+		dev->data = (unsigned char*)kzalloc(dev->buffer_size, GFP_KERNEL);
+		if (dev->data == NULL)
+ 35e:	48 85 c0             	test   %rax,%rax
+]]></programlisting>
+
+<para>
+So the <quote>leaked</quote> memory blocks were allocated by the calls to <code>kzalloc()</code> at line 84 of <filename>cfake.c</filename>.
+</para>
+
+<para>
+When you are done with the reports, you can stop KEDR as usual:
+</para>
+
+<programlisting><![CDATA[
+/usr/local/bin/kedr stop
+]]></programlisting>
+
+</section> <!-- "getting_started.leak_check" -->
+<!-- ================================================================ -->
+
+<section id="getting_started.fault_simulation">
+<title>Fault Simulation</title>
+
+<para>
+This section shows how to use KEDR for <link linkend="fault_simulation">fault simulation</link>. This way, you can, for example, model a situation when the system is short of free memory or put the target module in some other conditions that relatively seldom take place. The errors in such rarely executed parts of the target module can remain hidden for a long time, KEDR may help reveal them.
+</para>
+
+<para>
+Note that KEDR performs fault simulation only for the target module, other parts of the kernel are not affected.
+</para>
+
+<para>
+<quote>kedr_sample_target</quote> is used here as the target module.
+</para>
+
+<para>
+KEDR provides a special configuration profile for fault simulation. To use it, start KEDR as follows:
+</para>
+
+<programlisting>
+/usr/local/bin/kedr start kedr_sample_target -f fsim.conf
+</programlisting>
+
+<para>
+<filename>fsim.conf</filename> is installed with KEDR, so it is not necessary to specify the full path to this file.
+</para>
+
+<para>
+You can choose a scenario according to which KEDR will make calls to <function>__kmalloc</function> fail (the scenario also affects other functions <function>kmalloc</function> expands to). A number of scenarios is already provided by KEDR and available by default, custom scenarios can also be developed. In this example, we will show how to use a pre-defined scenario named <quote>kmalloc</quote>.
+</para>
+
+<para>
+Inform KEDR that it should use this scenario for <code>__kmalloc</code> and similar functions:
+<programlisting><![CDATA[
+echo "kmalloc" > /sys/kernel/debug/kedr_fault_simulation/points/kmalloc/current_indicator
+]]></programlisting>
+</para>
+
+<para>
+<quote>kmalloc</quote> is actually a name of a whole set of scenarios, so choose one of them:
+<programlisting><![CDATA[
+echo "1" > /sys/kernel/debug/kedr_fault_simulation/points/kmalloc/expression
+]]></programlisting>
+This means, each call to <code>__kmalloc</code> must fail. That is, the answer to the question whether to make a call fail or not is always <quote>1</quote> (<quote>yes</quote>) in this scenario.
+</para>
+
+<para>
+As you can see from the <ulink url="http://code.google.com/p/kedr/source/browse/sources/examples/sample_target/cfake.c">source code</ulink> of <filename>kedr_sample_target</filename>, <code>kzalloc</code> and, therefore, <code>__kmalloc</code> is called during the initialization of the module:
+</para>
+
+<programlisting><![CDATA[
+/* Allocate the array of devices */
+cfake_devices = (struct cfake_dev *)kzalloc(
+        cfake_ndevices * sizeof(struct cfake_dev), 
+        GFP_KERNEL);
+]]></programlisting>
+
+<para>
+So, now that the fault simulation is active, the module should fail to load. Let us check if it is the case.
+</para>
+
+<programlisting><![CDATA[
+./kedr_sample_target load
+]]></programlisting>
+
+<programlisting><![CDATA[
+insmod: error inserting 'kedr_sample_target.ko': -1 Cannot allocate memory
+]]></programlisting>
+
+<para>
+As it was expected, the loading has failed.
+</para>
+
+<para>
+Let us now consider a slightly more complex scenario.
+</para>
+
+<programlisting><![CDATA[
+echo "size > 2000" > /sys/kernel/debug/kedr_fault_simulation/points/kmalloc/expression
+]]></programlisting>
+
+<para>
+This means that only the allocation requests for memory blocks bigger than 2000 bytes will fail.
+</para>
+
+<programlisting><![CDATA[
+./kedr_sample_target load
+]]></programlisting>
+
+<para>
+Loading of the target module should succeed this time. However, the attempts to write to the devices it maintains or to read from them will fail. This is because the target module needs to allocate a 4000-byte buffer the first time the device is opened. Try this:
+</para>
+
+<programlisting><![CDATA[
+dd if=/dev/zero of=/dev/cfake0 bs=1 count=10
+]]></programlisting>
+
+<para>
+You should see an error message similar to the following as a result:
+</para>
+
+<programlisting><![CDATA[
+dd: opening '/dev/cfake0': Cannot allocate memory
+]]></programlisting>
+
+<para>
+To turn off fault simulation, just set the scenario to <quote>0</quote> (that means, <quote>never make the calls fail</quote>):
+</para>
+
+<programlisting><![CDATA[
+echo "0" > /sys/kernel/debug/kedr_fault_simulation/points/kmalloc/expression
+]]></programlisting>
+
+<para>
+Unload the target module:
+</para>
+
+<programlisting>
+./kedr_sample_target unload
+</programlisting>
+
+<para>
+Note that you can see the last location where a failure has been simulated by KEDR in <filename>kedr_fault_simulation/last_fault</filename> in debugfs:
+</para>
+
+<programlisting><![CDATA[
+# cat /sys/kernel/debug/kedr_fault_simulation/last_fault
+__kmalloc at [<ffffffffa01dd28e>] cfake_open+0x6e/0xb8 [kedr_sample_target]
+]]></programlisting>
+
+<para>
+That means, the last simulated fault was for the call to <code>__kmalloc</code> located at the given address. The location of the call is shown in a similar way to how the stack trace elements are printed to the system log.
+</para>
+
+<para>
+When KEDR is no longer needed, you can unload it too:
+</para>
+
+<programlisting>
+/usr/local/bin/kedr stop
+</programlisting>
+
+</section> <!-- "getting_started.fault_simulation" -->
+<!-- ================================================================ -->
+
+<section id="getting_started.call_monitoring">
+<title>Call Monitoring (Call Tracing)</title>
+
+<para>
+In this section, we will show how to use KEDR for call monitoring, that is, for gathering information about function calls made by the target module and saving it for further processing if needed. <quote>kedr_sample_target</quote> module is used here as the target once again.
+</para>
+
+<para>
+By default, the standard plugins that implement call monitoring for many widely used kernel functions are disabled when you build KEDR. If you need them, you should reconfigure KEDR with <code>KEDR_STANDARD_CALLM_PAYLOADS=on</code>:
+</para>
+
+<programlisting><![CDATA[
+cmake -DKEDR_STANDARD_CALLM_PAYLOADS=on ../kedr-0.4/
+]]></programlisting>
+
+<para>
+Then you should build and install KEDR as described above.
+</para>
+
+<para>
+To start the call monitoring facilities, load KEDR with <filename>callm.conf</filename> configuration profile:
+</para>
+
+<programlisting>
+/usr/local/bin/kedr start kedr_sample_target -f callm.conf
+</programlisting>
+
+<para>
+You can now instruct KEDR to output the information about the calls to kernel functions made by the target module. To do this, open another terminal and execute
+<programlisting>
+/usr/local/bin/kedr_capture_trace -b
+</programlisting>
+From this moment, all tracing information will be output to that terminal. Leave it for a time, and switch to the terminal, where you have started KEDR.
+</para>
+
+<note><para>
+If you would like to save the trace to a file instead of sending it to the terminal, add <code>-f <replaceable>path_to_file</replaceable></code> option when you launch <command>kedr_capture_trace</command>.
+</para></note>
+
+<para>
+Load the target kernel module:
+<programlisting>
+./kedr_sample_target load
+</programlisting>
+</para>
+<para>
+Do something with the character device created by the module, for example, write 10 zeroes to it:
+<programlisting>
+dd if=/dev/zero of=/dev/cfake0 bs=1 count=10
+</programlisting>
+</para>
+<para>
+Switch to the terminal, in which you have run <command>kedr_capture_trace</command> tool. You can find the records like the following ones there:
+</para>
+
+<programlisting><![CDATA[
+insmod-6416 [001] 805.997300: target_session_begins: 
+    target_name: "kedr_sample_target", payload_name: "kedr_cm_cmm"
+...
+insmod-6416 [001] 805.997320: target_session_begins: 
+    target_name: "kedr_sample_target", payload_name: "kedr_cm_vmm"
+insmod-6416 [001] 805.997615: called___kmalloc: ([<ffffffffa00e70b9>] init+0xb9) 
+    arguments: (320, d0), result: ffff8800165a8000
+dd-6438     [000] 858.641942: called___kmalloc: ([<ffffffffa01d661e>] core+0x61e) 
+    arguments: (4000, d0), result: ffff88001659e000
+dd-6438     [000] 858.642074: called_copy_from_user: ([<ffffffffa01d642a>] core+0x42a) 
+    arguments: (ffff88001659e000, 000000000137d000, 1), result: 0
+...
+]]></programlisting>
+
+<para>
+The first record says that KEDR plugin (<quote>payload module</quote>) with name <quote>kedr_cm_cmm</quote> detected the loading of the target module and was ready to monitor the function calls in it. The next several lines state the same but for other plugins.
+</para>
+
+<para>
+The next (4th line in the listing above) line contains information about the first detected call to a kernel function, <code>__kmalloc</code>. It shows the values of the parameters passed to the function (size=320, flags=0xd0) and its return value (address 0xffff8800165a8000). The operation was performed in the context of <quote>insmod</quote> process with PID 6416.
+</para>
+
+<note><para>
+<code>([&lt;ffffffffa00e70b9&gt;] init+0xb9)</code> specifies the memory address of that call to <code>__kmalloc</code> (0xffffffffa00e70b9). To be exact, it is the address of the next instruction after that call. <code>init+0xb9</code> indicates that the call instruction is located in <quote>init</quote> area of the module (in a function marked with <code>__init</code> in the source code) right before the offset <code>0xb9</code>. If the target module has debug information, this allows to determine the place in the source code of the module where the call is made. This may significantly simplify the analysis of the trace. The detailed explanation of how to analyze the trace and find the fragments of the source code corresponding to the trace records is given in <xref linkend="analyze_trace"/>.
+</para></note>
+
+<para>
+The fifth record shows another detected call to <code>__kmalloc</code>. It was made when you were writing zeroes to <filename>/dev/cfake0</filename> (it follows from the fact that the call was made in the context of <quote>dd</quote> process that you launched then).
+</para>
+<para>
+The sixth record shows a detected call to another kernel function, <code>copy_from_user</code>, which was also made when we were writing data to <filename>/dev/cfake0</filename> with <command>dd</command>.
+</para>
+
+<para>
+The remaining records in the trace are similar to those we have just described.
+</para>
+
+<para>
+Unload the target module using the following command (from the terminal in which the target module was loaded):
+<programlisting>
+./kedr_sample_target unload
+</programlisting>
+After that, the lines like the following ones should appear in the trace:
+</para>
+
+<programlisting><![CDATA[
+rmmod-6441 [001] 869.438875: called_kfree: ([<ffffffffa01d60d8>] core+0xd8) 
+    arguments: (ffff88001659e000)
+rmmod-6441 [001] 869.438879: called_kfree: ([<ffffffffa01d60d8>] core+0xd8) 
+    arguments: ((null))
+rmmod-6441 [001] 869.438881: called_kfree: ([<ffffffffa01d6108>] core+0x108) 
+    arguments: (ffff8800165a8000)
+rmmod-6441 [001] 869.438885: target_session_ends: 
+    target_name: "kedr_sample_target", payload_name: "kedr_cm_cmm"
+...
+rmmod-6441 [001] 869.438895: target_session_ends: 
+    target_name: "kedr_sample_target", payload_name: "kedr_cm_vmm"
+]]></programlisting>
+
+<para>
+There will be no new records in the trace file until the target module is loaded again. You can stop capturing the trace by pressing Ctrl+C in the terminal where <command>kedr_capture_trace</command> runs.
+</para>
+<para>
+Now you can stop KEDR and unload its components:
+<programlisting>
+/usr/local/bin/kedr stop
+</programlisting>
+</para>
+
+</section> <!-- "getting_started.call_monitoring" -->
+<!-- ================================================================ -->
+
+<section id="getting_started.all_at_once">
+<title>Doing It All at Once</title>
+
+<para>
+It is possible to perform several kinds of operations for a given target module at once. For example, it can be useful to subject the module to fault simulation and use memory leak detection at the same time. Problems in the <quote>error paths</quote> of the kernel modules could not always lead to visible consequences like kernel oopses. Such problems may result in memory leaks as well, which could be harder to detect. KEDR might help in this case too.
+</para>
+
+<para>
+To enable several kinds of analysis, just specify the appropriate configuration profiles when starting KEDR. For example, the following command starts KEDR for <filename>kedr_sample_target</filename> as a target with fault simulation and memory leak detection turned on:
+</para>
+
+<programlisting><![CDATA[
+/usr/local/bin/kedr start kedr_sample_target \
+   -f leak_check.conf \
+   -f fsim.conf
+]]></programlisting>
+
+<para>
+If call tracing is enabled, it is easy to add it as well:
+</para>
+
+<programlisting><![CDATA[
+/usr/local/bin/kedr start kedr_sample_target \
+   -f leak_check.conf \
+   -f fsim.conf \
+   -f callm.conf
+]]></programlisting>
+
+</section> <!-- "getting_started.all_at_once" -->
+<!-- ================================================================ -->
+
+</section>

@@ -1,0 +1,11 @@
+[group]
+	# The body of the replacement function
+	handler.post =>>
+	if (ret_val != NULL) {
+		size_t size = sizeof(struct posix_acl) + 
+			(size_t)acl->a_count * sizeof(struct posix_acl_entry);
+		kedr_lc_handle_alloc(target_module, ret_val, size,
+			caller_address);
+	}
+	<<
+#######################################################################

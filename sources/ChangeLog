@@ -1,0 +1,323 @@
+---------------------------------------------------------------------------
+KEDR 0.4.1
+---------------------------------------------------------------------------
+    * KEDR now supports kernel versions 3.7 and 3.8 too.
+
+    * Added support for processing of 3 more posix_acl_* functions.
+
+    * Provided a way to pass arbitrary data from pre- to post handlers. This
+may come in handy if the data a post handler needs are easier to obtain in
+the pre handler rather than in the post handler itself. Handling of
+posix_acl_create() in LeakCheck is one of the examples.
+
+    * Several bug fixes have also been made.
+
+---------------------------------------------------------------------------
+KEDR 0.4
+---------------------------------------------------------------------------
+
+    * Made several fixes to reflect the changes in the kernel versions 
+3.3 - 3.6 that prevented KEDR from working on such kernels.
+    
+    * LeakCheck: Redesigned it, separated the analysis engine from data 
+collection, provided a new API for external components. LeakCheck is now 
+modular with a clear interface between its components which simplifies 
+further enhancements and maintenance. The new API the core of LeakCheck 
+provides allows other kernel-mode software (not necessarily from KEDR 
+framework) to use memory leak detection facilities. Details:
+http://code.google.com/p/kedr/wiki/kedr_manual_using_kedr#Detecting_Memory_Leaks
+
+    * The information about the functions that can be processed by the tools
+from KEDR framework is now stored in a single place, namely, in
+"sources/functions/" tree. Logically, it can be considered a "function
+database" containing function names, return types, parameter names and
+types. This allowed to revisit several components of KEDR and make them 
+easier to maintain. Another useful consequence is that the tests for call 
+interception are no longer tied to call monitoring plugins and can be used 
+even if these plugins are disabled.
+
+    * Added handling of 12 more functions that allocate or deallocate 
+memory.
+
+    * Added handling of the functions kfree_rcu() expands to.
+LeakCheck is now able to detect the calls to *call_rcu*() and can treat 
+some of these calls similar to kfree().
+
+    * LeakCheck, Fault simulation: many fixes; several enhancements have 
+also been made to reduce memory overhead in special cases.
+
+    * Tools: Fixed: some of the the tools and tests assumed that lsmod, 
+insmod and rmmod are located in /sbin, which is not the case on some 
+systems.
+
+    * Core: Fixed: system headers (insn.h, etc.) were used for the 
+instruction decoder although KEDR contains a copy of these headers as well 
+as of the sources to avoid problems if the decoder API changes.
+
+    * The standard plugins for call monitoring are now disabled by default. 
+This does not affect the core call monitoring facilities of KEDR, they are 
+always enabled and the custom call monitoring plugins can still use them.
+
+    * If is not specified which tool plugins should be loaded when KEDR is 
+launched, LeakCheck will be used.
+
+    * LeakCheck: The results can now be output to the system log too.
+
+    * Fault simulation: the kernel modules providing the standard 
+indicators are now also loaded automatically when KEDR is loaded with the 
+default configuration profile for fault simulation specified.
+
+    * Fault simulation: 'last_fault' file is now maintained in debugfs. It 
+contains the information about the last function call a failure has been 
+simulated for. Can be helpful when analyzing errors revealed with the help 
+of fault simulation in the kernel modules.
+
+    * Install: The standard configuration files (*.conf) are now installed 
+to /etc tree rather than /var/opt tree. It seems to be more FHS-compliant 
+to store the configuration files of KEDR this way.
+
+    * Dropped support for kernel version 2.6.31. The minimum supported 
+kernel version is now 2.6.32. This has been done to ease the maintenance 
+burden a bit.
+
+---------------------------------------------------------------------------
+KEDR 0.3
+---------------------------------------------------------------------------
+Eugene A. Shatokhin <spectre@ispras.ru>:
+    
+    * Util: Revisited and simplified stack trace-related API
+save_stack_trace() function is not always available in the kernel, even
+if reliable stack traces are supported (that is, CONFIG_STACKTRACE may
+be undefined in this case too).
+
+kedr_save_stack_trace() now works as follows.
+
+If reliable stack traces are supported and save_stack_trace() is available,
+it is used. If the function is not available but still reliable stack
+traces are supported, we provide our implementation of save_stack_trace().
+It is basically the original implementation copied from the kernel, with
+only minor changes.
+
+If reliable stack traces are not supported, kedr_save_stack_trace()
+stores only one stack frame passed to it as one of the arguments.
+
+    * LeakCheck: Handling of allocs and frees is now deferred via a work queue
+
+Using a work queue allows to significantly reduce the time the replacement
+functions spend with a spinlock held.
+
+The internal API was revisited in several ways, not only to make use of
+the work queue but also to hide some implementation-specific stuff that was
+in the headers before (changes in our stack trace-related API made it
+possible).
+    
+    * Added support for interception of kmalloc_order_trace()
+kmalloc_order_trace() seems to have appeared in SLUB allocator in the kernel
+2.6.38. kmalloc() unfolds to it in some cases.
+
+    * Util: handled removal of obsoleted warning* fields from 
+stacktrace_ops in kernel 3.0
+
+'warning' and 'warning_symbol' fileds have been removed from stacktrace_ops
+structure in the kernel.
+
+Adjusted the implementation of kedr_save_stack_trace() accordingly.
+
+    * Doc: Disabled generation of "title" attributes and, hence, the tooltips
+
+By default, when generating HTML from DocBook XML with the standard XSL
+stylesheets, "title" attribute was generated for the div areas corresponding
+to the sections, etc. Because of this, the browsers showed the tooltips when
+the mouse pointer was hovering over these areas, which was really annoying.
+
+To fix this, I have disabled generation of "title" attributes.
+    
+    * Doc: Revisited the docs, rewrote several parts to make them clearer
+
+    * Got rid of some warnings that showed up on Fedora 15
+
+The warnings seemed to be quite benign in this case:
+- for .trigger files, 'result' variable remained unused;
+- for MiST Engine, the warning was about integer overflow in the fragments
+like this:
+        size_t a = ...
+        size_t b = ...
+        if (a > b && func(s[a - b]) ...)
+        ...
+I suppose, no integer overflow happens there. func(s[a - b]) is not even
+evaluated if a <= b.
+----------------------------------------
+
+Tsyvarev Andrey <tsyvarev@ispras.ru>:
+
+    * Core: Enhanced handler mechanism to support several handlers for a 
+target function
+
+It is now possible for several payload modules used simultaneously to 
+process the same target functions. This allows, for example, to perform 
+memory leak detection and fault simulation or some other kind of analysis 
+at the same time. This is achieved by using "pre" handlers and "post" 
+handlers in addition to the replacement functions. For a given target 
+function there may be no more than one replacement function but any number 
+of "pre" and "post" handlers. See "KEDR Reference" in the docs for details.
+
+    * FSim: Decoupled call monitoring and fault simulation
+
+The payload modules for fault simulation no longer deal with the trace 
+themselves. If one needs to collect the trace during fault simulation, one 
+should simply load payload modules both for fault simulation and for call 
+monitoring. 
+
+    * Conf: Fixed handling of kmem_cache_*_trace functions that have 
+different signatures in SLAB and SLUB memory allocators
+    
+    * Util: Changed behaviour of capture trace program w.r.t. reading of 
+the trace file in the blocking mode
+
+The default behaviour of kedr_capture_trace program is now non-blocking 
+reading of the trace. So the program will exit when there are no more 
+messages in the trace.
+Passing '-b' option turns the blocking mode on. In this case, the program 
+will wait for a message in the trace to appear if it is needed.
+In that mode, SIGINT signal simply turn reading mode to non-blocking.
+
+    * Util: Fixed kedr_capture_trace to work correctly in session mode
+    
+    * mutex_trylock() function is now considered required on the target 
+system rather than optional
+
+    * Tracing: If ring buffer is not supported, turn off the components 
+that use it.
+
+The configuration system of KEDR now checks whether ring buffer is 
+supported. If it is not, kedr_trace, call monitor payloads and capture 
+trace tool will not be built.
+
+Also the test for caller_address in the indicator was reworked in order not 
+to use trace (and hence, the test no longer depends on the availability of 
+ring buffer).
+
+    * Tests: In tests for tracing, add 'wait' after killing process that 
+reads the trace file.
+
+This allows to avoid the situation when kedr_trace module is being unloaded 
+while the trace file is still opened.
+
+    * FSim: Fixed intermediate template for fault simulation payloads
+
+The template 'forgot' fpoint.reuse_point of the initial datafile. In 
+addition, the tests for the final template of fault simulation payloads 
+were added.
+
+    * FSim: Added support for renaming fault simulation point for generated 
+fault simulation payloads.
+
+Besides that, added tests for this new functionality. Renamed some points 
+in standard payloads.
+
+---------------------------------------------------------------------------
+KEDR 0.2.1
+---------------------------------------------------------------------------
+Eugene A. Shatokhin <spectre@ispras.ru>:
+
+    * build: Added support for cross-building
+
+The build system has been revisited to allow building KEDR not only for the
+very system where the build process takes place ("build system") but also
+for a different one ("target system").
+
+For example, this allows to build KEDR on Ubuntu x86-64 for Chromium OS
+(x86-generic), to build KEDR for other versions or the kernel on the same
+system, etc.
+
+The mechanism uses "toolchain files". Two such files are already provided
+(sources/cmake/platform/*.cmake), more can be created by the users.
+
+For details on toolchain files, see the comments there as well as
+http://www.itk.org/Wiki/CMake_Cross_Compiling
+    
+    * Added support for user-definable version suffixes
+
+Using KEDR_VERSION_SUFFIX variable, one can specify a string to be appended
+to the version of KEDR like "-devel", "-build1234", etc.
+
+    * fsim: Spelling fixes
+
+---------------------------------------------------------------------------
+KEDR 0.2
+---------------------------------------------------------------------------
+Eugene A. Shatokhin <spectre@ispras.ru>:
+
+    * Made several fixes for KEDR to be able to work on the versions 2.6.37 
+and 2.6.38 of the kernel.
+    * Cleaned up the KEDR core, payloads, examples and the tests: removed 
+obsolete and unnecessary stuff, reduced code duplication.
+    * Prepared LeakCheck plugin that allows to detect memory leaks in the 
+kernel modules. Prepared the tests and documentation for it.
+    * Revisited sample modules for char devices, got rid of mknod, etc.
+    * Added support for call monitoring for 20 more functions (mostly - 
+memory allocation and deallocation routines). Support for fault simulation 
+for these functions was also provided where applicable.
+    * Added support for fault simulation for vmalloc()-like functions.
+    * Updated the build system: the presence of *node*-functions is now 
+checked in a more reliable way (fixes issues with exported but unusable 
+functions in Fedora 12-14 x86).
+    * Made stack trace helper stuff available for all components of KEDR 
+rather than for LeakCheck only.
+    * Call monitoring: made processing of additional spinlock functions 
+optional.
+    * Core: fixed incorrect handling of failures of try_module_get() for 
+payloads.
+    * Build system: fixed: kernel version and ability to build modules 
+were not checked.
+    * Build system: added a check for stack trace reliability. If the system
+does not provide reliable stack traces (e.g. neither CONFIG_FRAME_POINTER 
+nor CONFIG_STACK_UNWIND is set), some components of KEDR should be disabled
+(e.g. support for 'caller_address' in fault simulation). This is a temporary
+workaround for the problems, for example, on Debian 6.
+    * Added a test to additionally check (after KEDR is built) if 
+save_stack_trace() is reliable.
+    * Minor fixes: LC_ALL=C for awk, newlines at EOF, etc.
+    * Many cosmetic fixes in the messages and comments.
+
+
+Tsyvarev Andrey <tsyvarev@ispras.ru>:
+
+    * Fixed issues concerning parallel builds (bug #017731)
+    * Revisited kedr control script: added '--help' and '--version' options,
+added '-f' option to specify configuration files.
+    * Made support for the standard call monitoring and fault simulation 
+payloads optional.
+    * Replaced tracing mechanism based on trace events with our own one,
+which is more suitable for KEDR. The new mechanism gets rid of the hacks 
+like "nop" tracer, allows to channel the trace through several handler 
+applications at once and provides more guarantees the messages are in 
+appropriate order in the trace, even on SMP systems. It is built using the
+same basic blocks provided by the kernel that ftrace and trace event 
+mechanism uses: kernel markers, special ring buffer, etc.
+    * Rewrote kedr_capture_trace tool to make use of the new tracing 
+mechanism and to make the usage of the tool more intuitive.
+    * Added support for 'caller_address' variable in fault simulation 
+scenarios. This allows to restrict fault simulation to particular areas 
+in the target module.
+    * The controller no longer outputs messages about loading and unloading
+of the target module to the trace. Payload modules now do this.
+    * Removed dependency on Perl: the build system now uses shell commands 
+instead when checking for the existence of the functions.
+    * The tests for call interception no longer use trace. This allows to
+better distinguish the errors related to tracing support from the errors
+actually related to call interception.
+    * Made 'caller_address' optional. Support for this variable can be turned 
+off manually, it is also turned off if the system is unable to provide 
+reliable call stack traces.
+
+---------------------------------------------------------------------------
+KEDR 0.1
+---------------------------------------------------------------------------
+This is the first public stable version of KEDR framework. 
+Main features of this version:
+    * support for call monitoring for the kernel modules;
+    * support for fault simulation according to the scenarios chosen by 
+the user;
+    * the means to customize the analysis tools provided with KEDR and 
+to build new tools on top of it.

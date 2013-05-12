@@ -1,0 +1,10 @@
+See doc/html/kedr_manual_getting_started.html for installation instructions 
+and other relevant information. 
+
+The manual is also available online:
+http://code.google.com/p/kedr/wiki/kedr_manual
+
+If you are looking for information about how to build KEDR for a different 
+kernel version on the same system or for another system, see the "HowTos" 
+at the project site:
+http://code.google.com/p/kedr/

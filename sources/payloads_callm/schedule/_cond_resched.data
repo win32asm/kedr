@@ -1,0 +1,8 @@
+[group]
+	# The parameters to be output to the trace. 	
+	trace.param.type = int
+	trace.param.name = ret_val
+
+	# The format string to be used for trace output.
+	trace.formatString = "returns: %d"
+#######################################################################

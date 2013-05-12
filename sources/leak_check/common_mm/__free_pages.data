@@ -1,0 +1,13 @@
+[group]
+	# The body of the replacement function
+	handler.pre =>>
+	if (page != NULL) {
+		/* If the page is not mapped to the virtual memory 
+		 * (highmem?), page_address(page) returns NULL.
+		 */
+		const void *p = (const void *)page_address(page);
+		if (p != NULL) 
+			kedr_lc_handle_free(target_module, p, caller_address);
+	}
+	<<
+#######################################################################

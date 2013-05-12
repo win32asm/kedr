@@ -1,0 +1,132 @@
+<section id="standard_callm_payloads">
+<title>Standard Payloads for Call Monitoring</title>
+<para>
+This section describes the payload modules for call monitoring (call tracing) provided by KEDR.
+</para>
+<section id="standard_callm_payloads.functions">
+<title>List of Functions</title>
+    <para>
+Here is a full list of the payload modules that currently may be used for call monitoring, and the lists of the functions processed by each module. A function name in square brackets indicates that this function may or may not be exported on each particular system, and if it is exported, it will be processed. Only one of the functions separated by a slash is expected to be exported by the kernel, that function will be processed.
+    </para>
+    <para>
+<itemizedlist mark='circle'>
+<listitem><phrase role="emphasized">kedr_cm_cmm.ko:</phrase>
+    <simplelist type='vert'>
+    <member><function>__kmalloc</function></member>
+    <member><function>krealloc</function></member>
+    <member><function>__krealloc</function></member>
+    <member><function>kfree</function></member>
+    <member><function>kzfree</function></member>
+    <member><function>kmem_cache_alloc</function></member>
+    <member><function>[kmem_cache_alloc_notrace]</function></member>
+    <member><function>[kmem_cache_alloc_trace]</function></member>
+    <member><function>kmem_cache_free</function></member>
+    <member><function>__get_free_pages</function></member>
+    <member><function>get_zeroed_page</function></member>
+    <member><function>free_pages</function></member>
+    <member><function>[__kmalloc_node]</function></member>
+    <member><function>[kmem_cache_alloc_node]</function></member>
+    <member><function>[kmem_cache_alloc_node_notrace]</function></member>
+    <member><function>[kmem_cache_alloc_node_trace]</function></member>
+    <member><function>[__alloc_pages_nodemask]</function></member>
+    <member><function>[alloc_pages_current]</function></member>
+    <member><function>[__free_pages]</function></member>
+    <member><function>[alloc_pages_exact]</function></member>
+    <member><function>[free_pages_exact]</function></member>
+    <member><function>[alloc_pages_exact_nid]</function></member>
+    <member><function>[kmalloc_order_trace]</function></member>
+	</simplelist>
+</listitem>
+<listitem><phrase role="emphasized">kedr_cm_uaccess.ko:</phrase>
+    <simplelist type='vert'>
+    <member><function>copy_to_user/_copy_to_user</function></member>
+    <member><function>copy_from_user/_copy_from_user</function></member>
+    <member><function>strndup_user</function></member>
+    <member><function>memdup_user</function></member>
+    </simplelist>
+</listitem>
+<listitem><phrase role="emphasized">kedr_cm_mutexes.ko:</phrase>
+    <simplelist type='vert'>
+    <member><function>__mutex_init</function></member>
+    <member><function>[mutex_lock]</function></member>
+    <member><function>[mutex_lock_interruptible]</function></member>
+    <member><function>[mutex_lock_killable]</function></member>
+    <member><function>mutex_trylock</function></member>
+    <member><function>mutex_unlock</function></member>
+    </simplelist>
+</listitem>
+<listitem><phrase role="emphasized">kedr_cm_spinlocks.ko:</phrase>
+    <simplelist type='vert'>
+    <member><function>_spin_lock_irqsave/_raw_spin_lock_irqsave</function></member>
+    <member><function>_spin_unlock_irqrestore/_raw_spin_unlock_irqrestore</function></member>
+    <member><function>_spin_lock/_raw_spin_lock</function></member>
+    <member><function>_spin_lock_irq/_raw_spin_lock_irq</function></member>
+    <member><function>_spin_unlock/_raw_spin_unlock</function></member>
+    <member><function>_spin_unlock_irq/_raw_spin_unlock_irq</function></member>
+    </simplelist>
+</listitem>
+<listitem><phrase role="emphasized">kedr_cm_waitqueue.ko:</phrase>
+    <simplelist type='vert'>
+    <member><function>__wake_up</function></member>
+    <member><function>init_waitqueue_head/__init_waitqueue_head</function></member>
+    <member><function>prepare_to_wait</function></member>
+    <member><function>finish_wait</function></member>
+    <member><function>remove_wait_queue</function></member>
+    <member><function>add_wait_queue</function></member>
+    <member><function>add_wait_queue_exclusive</function></member>
+    </simplelist>
+</listitem>
+<listitem><phrase role="emphasized">kedr_cm_capable.ko:</phrase>
+    <simplelist type='vert'>
+    <member><function>capable</function></member>
+    </simplelist>
+</listitem>
+<listitem><phrase role="emphasized">kedr_cm_vmm.ko:</phrase>
+    <simplelist type='vert'>
+    <member><function>vmalloc</function></member>
+    <member><function>__vmalloc</function></member>
+    <member><function>vmalloc_user</function></member>
+    <member><function>vmalloc_node</function></member>
+    <member><function>vmalloc_32</function></member>
+    <member><function>vmalloc_32_user</function></member>
+    <member><function>vfree</function></member>
+    <member><function>[vzalloc]</function></member>
+    <member><function>[vzalloc_node]</function></member>
+    </simplelist>
+</listitem>
+<listitem><phrase role="emphasized">kedr_cm_schedule.ko:</phrase>
+    <simplelist type='vert'>
+    <member><function>schedule</function></member>
+    <member><function>[preempt_schedule]</function></member>
+    <member><function>_cond_resched</function></member>
+    <member><function>schedule_timeout</function></member>
+    <member><function>schedule_timeout_uninterruptible</function></member>
+    <member><function>schedule_timeout_interruptible</function></member>
+    <member><function>io_schedule</function></member>
+    <member><function>cond_resched_lock/__cond_resched_lock</function></member>
+    </simplelist>
+</listitem>
+<listitem><phrase role="emphasized">kedr_cm_mem_util.ko:</phrase>
+    <simplelist type='vert'>
+    <member><function>kstrdup</function></member>
+    <member><function>kstrndup</function></member>
+    <member><function>kmemdup</function></member>
+    <member><function>[call_rcu]</function></member>
+    <member><function>[call_rcu_sched]</function></member>
+    <member><function>[kfree_call_rcu]</function></member>
+    <member><function>[add_to_page_cache_lru]</function></member>
+    <member><function>[add_to_page_cache_locked]</function></member>
+    <member><function>[posix_acl_alloc]</function></member>
+    <member><function>[posix_acl_clone]</function></member>
+    <member><function>[posix_acl_from_mode]</function></member>
+    <member><function>[match_strdup]</function></member>
+    </simplelist>
+</listitem>
+</itemizedlist>
+    </para>
+	
+	<note><para>
+Note that <code>*call_rcu*</code> functions are currently processed only if the system provides <code>kfree_rcu</code>. This is because it can be necessary to track this way to free the target module's data too.
+	</para></note>
+</section>
+</section>

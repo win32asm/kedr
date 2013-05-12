@@ -1,0 +1,153 @@
+<section id="capture_trace">
+<title>Capturing the Trace</title>
+
+<section id="capture_trace.general">
+<title>General</title>
+<para>
+<command>kedr_capture_trace</command> - a tool to capture the data output by payload modules to the trace.
+</para>
+</section>
+
+<section id="capture_trace.syntax">
+<title>Usage</title>
+
+<cmdsynopsis>
+    <command>kedr_capture_trace</command>
+    <arg><replaceable>OPTIONS</replaceable></arg>
+</cmdsynopsis>
+</section>
+
+<section id="capture_trace.description">
+<title>Description</title>
+    <para>
+<command>kedr_capture_trace</command> captures the trace information output by payload modules.
+    </para>
+    <para>
+Each trace record can be written to the specified file(s) ('-f' option) and/or passed to user-specified application(s) as STDIN ('-p' option). If neither '-f' nor '-p' option is specified, all trace records are output to STDOUT.
+    </para>
+</section>
+
+<section id="kedr_capture_trace.options">
+<title>Options</title>
+
+<variablelist>
+    <varlistentry>
+        <term>-d <replaceable>debugfs_mount_point</replaceable></term>
+        <listitem>
+            <para>
+Specify the directory the debugfs filesystem is currently mounted to. This filesystem contains the trace file from which the trace will be captured. If this argument is not supplied, it is assumed that the mount point of debugfs filesystem is <filename class="directory">/sys/kernel/debug</filename>.
+            </para>
+        </listitem>
+    </varlistentry>
+    <varlistentry>
+        <term>-f, --file <replaceable>file</replaceable></term>
+        <listitem>
+            <para>
+Store every trace record in the given file. If the file doesn't exist, <command>kedr_capture_trace</command> creates it at the beginning, otherwise appends new data to the file. When <replaceable>file</replaceable> is -, trace records will be output to STDOUT.
+            </para>
+        </listitem>
+    </varlistentry>
+    <varlistentry>
+        <term>-p, --program <replaceable>application</replaceable></term>
+        <listitem>
+            <para>
+On start, <command>kedr_capture_trace</command> launches <replaceable>application</replaceable>. Then it pipes every trace record to the standard input of this application. When capturing is to be stopped, <command>kedr_capture_trace</command> closes its side of pipe and waits until the application terminates.
+            </para>
+        </listitem>
+    </varlistentry>
+    <varlistentry>
+        <term>-s, --session</term>
+        <listitem>
+            <para>
+Read only those records from the trace that were collected since the target module had been loaded and until the target module had been unloaded (<firstterm>target session</firstterm>). Capturing stops after the last record from the target session has been processed.
+            </para>
+        </listitem>
+    </varlistentry>
+    <varlistentry>
+        <term>-b, --blocking</term>
+        <listitem>
+            <para>
+When there are no messages in the trace, wait for the new messages to appear instead of quitting.
+            </para>
+            <para>
+The first SIGINT signal sent to <command>kedr_capture_trace</command> process (e.g., <code>Ctrl+C</code>), turns off the effect of this flag. That is, <command>kedr_capture_trace</command> will quit when it has read all messages present in the trace at that moment and will wait no longer.
+            </para>
+        </listitem>
+    </varlistentry>
+
+</variablelist>
+
+<note><para>
+'-s' option should not be used if some trace records from the current target session have already been processed (and, consequently, removed from the trace).
+</para></note>
+</section>
+
+<section id="capture_trace.examples">
+<title>Examples</title>
+    <para>
+Save all records currently present in the trace to the file <filename>trace.txt</filename>:
+    </para>
+<programlisting>
+kedr_capture_trace -f trace.txt
+</programlisting>
+
+    <para>
+Listen to the trace and keep saving the records from the trace to the file <filename>trace.txt</filename> until 'Ctrl+C' is pressed:
+	</para>
+<programlisting>
+kedr_capture_trace -b -f trace.txt
+^C
+</programlisting>
+
+    <para>
+Save all records from the trace corresponding to kfree() calls to the file <filename>frees.txt</filename>:
+    </para>
+<programlisting>
+kedr_capture_trace -p grep called_kfree > frees.txt"
+</programlisting>
+
+    <para>
+Listen to the trace and pack the trace records to <filename>trace.bz2</filename> archive on the fly:
+    </para>
+<programlisting>
+kedr_capture_trace -b -p bzip2 > trace.bz2
+</programlisting>
+
+    <para>
+Listen to the trace, save all records from the trace to <filename>trace.txt</filename> and the records corresponding to kfree() calls and to __kmalloc() calls to <filename>frees.txt</filename> and <filename>allocs.txt</filename>, respectively:
+    </para>
+<programlisting>
+kedr_capture_trace -b \
+-p "grep called_kfree > frees.txt" \
+-p "grep called___kmalloc > allocs.txt" \
+-f trace.txt
+</programlisting>
+
+    <para>
+Save all records from the trace that appeared when the particular actions were being performed (probably the actions on the target module).
+    </para>
+<programlisting><![CDATA[
+kedr_capture_trace -f /dev/null
+<do some actions>
+kedr_capture_trace -f trace.txt
+]]></programlisting>
+
+    <para>
+Listen to the trace, save all records from the trace generated by <filename>moduleA</filename> to the file <filename>trace.txt</filename>.
+    </para>
+<programlisting><![CDATA[
+kedr start moduleA
+kedr_capture_trace -b -s -f trace.txt &
+pid=$!
+/sbin/modprobe moduleA
+...
+/sbin/modprobe -r moduleA
+wait $pid
+kedr stop
+]]></programlisting>
+
+    <para>
+See also <xref linkend="getting_started.call_monitoring"/>.
+    </para>
+</section>
+</section>
