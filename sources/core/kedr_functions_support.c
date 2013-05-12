@@ -33,6 +33,8 @@
 
 #include "kedr_functions_support_internal.h"
 
+#include "config.h"
+
 /*
  * After some intermediate errors it is difficult to return KEDR to
  * reasonable consistent state.
@@ -1019,6 +1021,7 @@ function_info_table_init(struct function_info_table* table,
 {
 	struct hlist_head* heads;
 	size_t n_heads;
+	size_t i;
 	unsigned int bits;
 	
 	n_heads = (n_elems * 10 + 6)/ 7;
@@ -1036,6 +1039,9 @@ function_info_table_init(struct function_info_table* table,
 		pr_err("function_info_table_init: Failed to allocate functions info table.");
 		return -ENOMEM;
 	}
+	
+	for (i = 0; i < n_heads; ++i)
+		INIT_HLIST_HEAD(&heads[i]);
 	
 	table->heads = heads;
 	table->bits = bits;
@@ -1097,12 +1103,11 @@ struct function_info_elem*
 function_info_table_get(struct function_info_table* table, void* orig)
 {
 	int i;
-	struct hlist_node* node_tmp;
 	struct function_info_elem* info_elem;
 
 	i = hash_ptr(orig, table->bits);
 
-	hlist_for_each_entry(info_elem, node_tmp, &table->heads[i], list)
+	kedr_hlist_for_each_entry(info_elem, &table->heads[i], list)
 	{
 		if(info_elem->orig == orig) return info_elem;
 	}
@@ -1130,12 +1135,11 @@ struct function_info_elem*
 function_info_table_find(struct function_info_table* table, void* orig)
 {
 	int i;
-	struct hlist_node* node_tmp;
 	struct function_info_elem* info_elem;
 
 	i = hash_ptr(orig, table->bits);
 
-	hlist_for_each_entry(info_elem, node_tmp, &table->heads[i], list)
+	kedr_hlist_for_each_entry(info_elem, &table->heads[i], list)
 	{
 		if(info_elem->orig == orig) return info_elem;
 	}
