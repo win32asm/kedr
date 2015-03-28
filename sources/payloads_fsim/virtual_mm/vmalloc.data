@@ -1,4 +1,8 @@
 [group]
 	# Fault Simulation
+
+	fpoint.param.type = unsigned long
+	fpoint.param.name = size
+
 	fpoint.fault_code =	ret_val = NULL;
 #######################################################################

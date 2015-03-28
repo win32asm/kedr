@@ -42,6 +42,7 @@ if(KERNEL_PART)
 endif(KERNEL_PART)
 
 add_subdirectory(kmalloc)
+add_subdirectory(vmalloc)
 add_subdirectory(capable)
 add_subdirectory(common)
 

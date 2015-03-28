@@ -1,5 +1,9 @@
 [group]
 	# Fault Simulation
 	fpoint.reuse_point = vmalloc
+
+	fpoint.param.type = unsigned long
+	fpoint.param.name = size
+
 	fpoint.fault_code =	ret_val = NULL;
 #######################################################################
